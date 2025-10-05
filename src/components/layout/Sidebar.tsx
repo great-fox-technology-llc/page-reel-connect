@@ -24,7 +24,7 @@ const navigationSections = [
       { icon: MessageSquare, label: "Posts", path: "/posts" },
       { icon: ImageIcon, label: "Stories", path: "/stories" },
       { icon: Video, label: "Reels", path: "/reels" },
-      { icon: Archive, label: "Media Library", path: "/media-library" },
+      { icon: Archive, label: "Media Library", path: "/media" },
     ]
   },
   {

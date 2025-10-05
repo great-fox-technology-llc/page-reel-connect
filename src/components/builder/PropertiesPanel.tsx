@@ -1,4 +1,4 @@
-import { X, ChevronDown } from "lucide-react";
+import { X, ChevronDown, Layers } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,16 +8,53 @@ import { useState } from "react";
 
 export const PropertiesPanel = () => {
   const [elementSelected, setElementSelected] = useState(false);
+  const [showLayers, setShowLayers] = useState(false);
 
   return (
     <div className="w-80 bg-background/95 backdrop-blur-xl border-l border-white/10 flex flex-col h-full">
       {/* Header */}
       <div className="p-4 border-b border-white/10 flex items-center justify-between">
         <h2 className="font-bold">Properties</h2>
-        <Button variant="ghost" size="icon" className="h-8 w-8">
-          <X className="w-4 h-4" />
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setShowLayers(!showLayers)}
+          className="gap-2"
+        >
+          <Layers className="w-4 h-4" />
+          Layers
         </Button>
       </div>
+
+      {/* Layers Panel (toggleable) */}
+      {showLayers && (
+        <div className="border-b border-white/10 bg-background/50">
+          <div className="p-4 space-y-2">
+            <div className="flex items-center justify-between text-sm mb-3">
+              <span className="font-medium">Page Structure</span>
+              <Button variant="ghost" size="sm" className="h-6 text-xs">
+                Collapse All
+              </Button>
+            </div>
+            <div className="space-y-1 text-sm">
+              <div className="flex items-center gap-2 p-2 rounded hover:bg-muted/50 cursor-pointer">
+                <ChevronDown className="w-3 h-3" />
+                <span>Hero Section</span>
+              </div>
+              <div className="flex items-center gap-2 p-2 rounded hover:bg-muted/50 cursor-pointer ml-4">
+                <span className="text-muted-foreground">Heading</span>
+              </div>
+              <div className="flex items-center gap-2 p-2 rounded hover:bg-muted/50 cursor-pointer ml-4">
+                <span className="text-muted-foreground">Button</span>
+              </div>
+              <div className="flex items-center gap-2 p-2 rounded hover:bg-muted/50 cursor-pointer">
+                <ChevronDown className="w-3 h-3" />
+                <span>Content Section</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {elementSelected ? (
         <>

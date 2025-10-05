@@ -3,6 +3,12 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
 
+interface ComponentItem {
+  id: string;
+  label: string;
+  icon: string;
+}
+
 const componentGroups = [
   {
     title: "BASIC COMPONENTS",
@@ -101,9 +107,18 @@ export const ComponentLibrary = () => {
               {isExpanded && (
                 <div className="grid grid-cols-2 gap-2 mt-2">
                   {group.items.map((item) => (
-                    <button
+                  <button
                       key={item.id}
                       draggable
+                      onDragStart={(e) => {
+                        e.dataTransfer.effectAllowed = 'copy';
+                        e.dataTransfer.setData('application/json', JSON.stringify({
+                          type: 'component',
+                          componentId: item.id,
+                          componentLabel: item.label,
+                          componentIcon: item.icon
+                        }));
+                      }}
                       className="flex flex-col items-center justify-center gap-2 p-3 rounded-lg bg-background/50 hover:bg-primary/10 hover:border-primary/50 border border-white/10 transition-all cursor-move group"
                     >
                       <div className="text-2xl">{item.icon}</div>
@@ -119,21 +134,6 @@ export const ComponentLibrary = () => {
         })}
       </div>
 
-      {/* Media Library */}
-      <div className="p-4 border-t border-white/10">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-xs font-semibold text-muted-foreground">MEDIA LIBRARY</h3>
-          <Badge className="text-[10px] px-1.5 py-0 bg-primary/20 text-primary border-primary/30">Upload</Badge>
-        </div>
-        <div className="grid grid-cols-3 gap-2">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className="aspect-square rounded-lg bg-background/50 border border-white/10" />
-          ))}
-          <button className="aspect-square rounded-lg bg-background/50 border border-dashed border-white/20 hover:border-primary/50 flex items-center justify-center text-2xl text-muted-foreground hover:text-primary transition-colors">
-            +
-          </button>
-        </div>
-      </div>
     </div>
   );
 };
