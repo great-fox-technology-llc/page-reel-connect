@@ -1,14 +1,36 @@
-import { X, ChevronDown, Layers } from "lucide-react";
+import { ChevronDown, Layers } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Slider } from "@/components/ui/slider";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 
-export const PropertiesPanel = () => {
-  const [elementSelected, setElementSelected] = useState(false);
+interface PropertiesPanelProps {
+  selectedBlockId?: string | null;
+}
+
+export const PropertiesPanel = ({ selectedBlockId }: PropertiesPanelProps) => {
   const [showLayers, setShowLayers] = useState(false);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState("content");
+
+  // Sync tab with URL hash
+  useEffect(() => {
+    const hash = location.hash.replace('#props=', '');
+    if (hash && ['content', 'style', 'behavior'].includes(hash)) {
+      setActiveTab(hash);
+    }
+  }, [location.hash]);
+
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    navigate(`#props=${value}`, { replace: true });
+  };
+
+  const elementSelected = !!selectedBlockId;
 
   return (
     <div className="w-80 bg-background/95 backdrop-blur-xl border-l border-white/10 flex flex-col h-full">
@@ -59,7 +81,7 @@ export const PropertiesPanel = () => {
       {elementSelected ? (
         <>
           {/* Property Tabs */}
-          <Tabs defaultValue="content" className="flex-1 flex flex-col">
+          <Tabs value={activeTab} onValueChange={handleTabChange} className="flex-1 flex flex-col">
             <TabsList className="w-full grid grid-cols-3 bg-background/50">
               <TabsTrigger value="content">Content</TabsTrigger>
               <TabsTrigger value="style">Style</TabsTrigger>

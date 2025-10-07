@@ -1,4 +1,30 @@
-import { Search, ChevronDown } from "lucide-react";
+import { 
+  Search, 
+  ChevronDown,
+  Type, 
+  AlignLeft, 
+  Image as ImageIcon, 
+  Video, 
+  SquareMousePointer, 
+  Star, 
+  Minus, 
+  MoveVertical,
+  LayoutPanelTop,
+  Rows3,
+  Newspaper,
+  Clapperboard,
+  PlaySquare,
+  Grid3X3,
+  FileText,
+  MessageSquare,
+  Box,
+  Columns2,
+  LayoutGrid,
+  RectangleHorizontal,
+  Rocket,
+  Palette,
+  Mail
+} from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
@@ -6,55 +32,80 @@ import { useState } from "react";
 interface ComponentItem {
   id: string;
   label: string;
-  icon: string;
 }
+
+const iconMap: Record<string, React.ReactNode> = {
+  heading: <Type className="w-5 h-5" />,
+  text: <AlignLeft className="w-5 h-5" />,
+  image: <ImageIcon className="w-5 h-5" />,
+  video: <Video className="w-5 h-5" />,
+  button: <SquareMousePointer className="w-5 h-5" />,
+  icon: <Star className="w-5 h-5" />,
+  divider: <Minus className="w-5 h-5" />,
+  spacer: <MoveVertical className="w-5 h-5" />,
+  card: <LayoutPanelTop className="w-5 h-5" />,
+  "button-group": <Rows3 className="w-5 h-5" />,
+  feed: <Newspaper className="w-5 h-5" />,
+  stories: <Clapperboard className="w-5 h-5" />,
+  reels: <PlaySquare className="w-5 h-5" />,
+  "product-grid": <Grid3X3 className="w-5 h-5" />,
+  form: <FileText className="w-5 h-5" />,
+  comments: <MessageSquare className="w-5 h-5" />,
+  container: <Box className="w-5 h-5" />,
+  columns: <Columns2 className="w-5 h-5" />,
+  grid: <LayoutGrid className="w-5 h-5" />,
+  section: <RectangleHorizontal className="w-5 h-5" />,
+  hero: <Rocket className="w-5 h-5" />,
+  portfolio: <Palette className="w-5 h-5" />,
+  contact: <Mail className="w-5 h-5" />,
+};
 
 const componentGroups = [
   {
     title: "BASIC COMPONENTS",
     isPro: false,
     items: [
-      { id: "heading", label: "Heading", icon: "H" },
-      { id: "text", label: "Text", icon: "¶" },
-      { id: "image", label: "Image", icon: "🖼️" },
-      { id: "video", label: "Video", icon: "🎥" },
-      { id: "button", label: "Button", icon: "▭" },
-      { id: "icon", label: "Icon", icon: "★" },
-      { id: "divider", label: "Divider", icon: "─" },
-      { id: "spacer", label: "Spacer", icon: "⬜" },
+      { id: "heading", label: "Heading" },
+      { id: "text", label: "Text" },
+      { id: "image", label: "Image" },
+      { id: "video", label: "Video" },
+      { id: "button", label: "Button" },
+      { id: "icon", label: "Icon" },
+      { id: "divider", label: "Divider" },
+      { id: "spacer", label: "Spacer" },
     ]
   },
   {
     title: "PREMIUM COMPONENTS",
     isPro: true,
     items: [
-      { id: "button-group", label: "Button Group", icon: "▭▭" },
-      { id: "card", label: "Card", icon: "📋" },
-      { id: "feed", label: "Feed", icon: "📰" },
-      { id: "stories", label: "Stories", icon: "⭕" },
-      { id: "reels", label: "Reels", icon: "🎬" },
-      { id: "product-grid", label: "Product Grid", icon: "⊞" },
-      { id: "form", label: "Form", icon: "📝" },
-      { id: "comments", label: "Comments", icon: "💬" },
+      { id: "button-group", label: "Button Group" },
+      { id: "card", label: "Card" },
+      { id: "feed", label: "Feed" },
+      { id: "stories", label: "Stories" },
+      { id: "reels", label: "Reels" },
+      { id: "product-grid", label: "Product Grid" },
+      { id: "form", label: "Form" },
+      { id: "comments", label: "Comments" },
     ]
   },
   {
     title: "LAYOUT",
     isPro: false,
     items: [
-      { id: "container", label: "Container", icon: "▢" },
-      { id: "columns", label: "Columns", icon: "⫴" },
-      { id: "grid", label: "Grid", icon: "⊞" },
-      { id: "section", label: "Section", icon: "▭" },
+      { id: "container", label: "Container" },
+      { id: "columns", label: "Columns" },
+      { id: "grid", label: "Grid" },
+      { id: "section", label: "Section" },
     ]
   },
   {
     title: "TEMPLATES",
     isPro: false,
     items: [
-      { id: "hero", label: "Hero Section", icon: "🚀" },
-      { id: "portfolio", label: "Portfolio Grid", icon: "🎨" },
-      { id: "contact", label: "Contact Form", icon: "📧" },
+      { id: "hero", label: "Hero Section" },
+      { id: "portfolio", label: "Portfolio Grid" },
+      { id: "contact", label: "Contact Form" },
     ]
   },
 ];
@@ -116,12 +167,13 @@ export const ComponentLibrary = () => {
                           type: 'component',
                           componentId: item.id,
                           componentLabel: item.label,
-                          componentIcon: item.icon
                         }));
                       }}
                       className="flex flex-col items-center justify-center gap-2 p-3 rounded-lg bg-background/50 hover:bg-primary/10 hover:border-primary/50 border border-white/10 transition-all cursor-move group"
                     >
-                      <div className="text-2xl">{item.icon}</div>
+                      <div className="text-primary/70 group-hover:text-primary group-hover:scale-110 transition-all">
+                        {iconMap[item.id]}
+                      </div>
                       <span className="text-xs text-center group-hover:text-primary transition-colors">
                         {item.label}
                       </span>
