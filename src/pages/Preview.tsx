@@ -31,6 +31,13 @@ interface CanvasBlock {
   type: string;
   label: string;
   content?: any;
+  props?: {
+    content?: string;
+    link?: string;
+    src?: string;
+    alt?: string;
+    [key: string]: any;
+  };
 }
 
 const iconMap: Record<string, React.ReactNode> = {
@@ -68,7 +75,11 @@ export default function Preview() {
     const savedDraft = localStorage.getItem('canvas-draft');
     if (savedDraft) {
       try {
-        setBlocks(JSON.parse(savedDraft));
+        const draft = JSON.parse(savedDraft);
+        // Handle both old format (array) and new format (object with components)
+        const components = Array.isArray(draft) ? draft : (draft.components || []);
+        setBlocks(components);
+        console.info('Preview loaded', { draftId, componentCount: components.length });
       } catch (error) {
         console.error('Failed to load draft:', error);
       }
@@ -90,24 +101,35 @@ export default function Preview() {
           </div>
         ) : (
           <div className="space-y-8">
-            {blocks.map((block) => (
-              <div key={block.id} className="bg-white rounded-lg border border-gray-200 p-8 shadow-sm hover:shadow-md transition-shadow">
-                <div className="flex items-start gap-4">
-                  <div className="text-primary flex-shrink-0">
-                    {iconMap[block.type] || <Box className="w-8 h-8" />}
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-xl text-gray-900 mb-2">{block.label}</h3>
-                    <p className="text-sm text-gray-500 mb-4 capitalize">{block.type.replace('-', ' ')}</p>
-                    {block.content && (
-                      <div className="text-gray-700">
-                        {typeof block.content === 'string' ? block.content : JSON.stringify(block.content)}
-                      </div>
-                    )}
+            {blocks.map((block) => {
+              const props = block.content?.content || block.props?.content || block.content;
+              const link = block.content?.link || block.props?.link;
+              
+              return (
+                <div key={block.id} className="bg-white rounded-lg border border-gray-200 p-8 shadow-sm hover:shadow-md transition-shadow">
+                  <div className="flex items-start gap-4">
+                    <div className="text-primary flex-shrink-0">
+                      {iconMap[block.type] || <Box className="w-8 h-8" />}
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-xl text-gray-900 mb-2">{block.label}</h3>
+                      <p className="text-sm text-gray-500 mb-4 capitalize">{block.type.replace('-', ' ')}</p>
+                      {props && (
+                        <div className="text-gray-700 whitespace-pre-wrap">
+                          {link ? (
+                            <a href={link} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                              {props}
+                            </a>
+                          ) : (
+                            props
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

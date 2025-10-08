@@ -7,11 +7,25 @@ import { Slider } from "@/components/ui/slider";
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
-interface PropertiesPanelProps {
-  selectedBlockId?: string | null;
+interface CanvasBlock {
+  id: string;
+  type: string;
+  label: string;
+  props: {
+    content?: string;
+    link?: string;
+    src?: string;
+    alt?: string;
+    [key: string]: any;
+  };
 }
 
-export const PropertiesPanel = ({ selectedBlockId }: PropertiesPanelProps) => {
+interface PropertiesPanelProps {
+  selectedBlock?: CanvasBlock | null;
+  onUpdateProps?: (blockId: string, props: any) => void;
+}
+
+export const PropertiesPanel = ({ selectedBlock, onUpdateProps }: PropertiesPanelProps) => {
   const [showLayers, setShowLayers] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
@@ -30,7 +44,13 @@ export const PropertiesPanel = ({ selectedBlockId }: PropertiesPanelProps) => {
     navigate(`#props=${value}`, { replace: true });
   };
 
-  const elementSelected = !!selectedBlockId;
+  const handlePropChange = (key: string, value: any) => {
+    if (selectedBlock && onUpdateProps) {
+      onUpdateProps(selectedBlock.id, { [key]: value });
+    }
+  };
+
+  const elementSelected = !!selectedBlock;
 
   return (
     <div className="w-80 bg-background/95 backdrop-blur-xl border-l border-white/10 flex flex-col h-full">
@@ -92,11 +112,21 @@ export const PropertiesPanel = ({ selectedBlockId }: PropertiesPanelProps) => {
               <TabsContent value="content" className="p-4 space-y-4 mt-0">
                 <div>
                   <Label className="text-xs text-muted-foreground mb-2 block">Text Content</Label>
-                  <Input placeholder="Enter text..." className="bg-background/50 border-white/10" />
+                  <Input 
+                    placeholder="Enter text..." 
+                    className="bg-background/50 border-white/10"
+                    value={selectedBlock?.props.content || ''}
+                    onChange={(e) => handlePropChange('content', e.target.value)}
+                  />
                 </div>
                 <div>
                   <Label className="text-xs text-muted-foreground mb-2 block">Link URL</Label>
-                  <Input placeholder="https://..." className="bg-background/50 border-white/10" />
+                  <Input 
+                    placeholder="https://..." 
+                    className="bg-background/50 border-white/10"
+                    value={selectedBlock?.props.link || ''}
+                    onChange={(e) => handlePropChange('link', e.target.value)}
+                  />
                 </div>
               </TabsContent>
 

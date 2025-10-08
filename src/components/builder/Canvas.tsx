@@ -17,7 +17,13 @@ interface CanvasBlock {
   id: string;
   type: string;
   label: string;
-  content?: any;
+  props: {
+    content?: string;
+    link?: string;
+    src?: string;
+    alt?: string;
+    [key: string]: any;
+  };
 }
 
 interface ContextMenuState {
@@ -29,9 +35,12 @@ interface ContextMenuState {
 
 interface CanvasProps {
   onSelectBlock?: (blockId: string | null) => void;
+  onBlocksChange?: (blocks: CanvasBlock[]) => void;
 }
 
-export const Canvas = ({ onSelectBlock }: CanvasProps) => {
+export type { CanvasBlock };
+
+export const Canvas = ({ onSelectBlock, onBlocksChange }: CanvasProps) => {
   const navigate = useNavigate();
   const [device, setDevice] = useState<DeviceType>("desktop");
   const [zoom, setZoom] = useState(100);
@@ -58,11 +67,18 @@ export const Canvas = ({ onSelectBlock }: CanvasProps) => {
           id: `${data.componentId}-${Date.now()}`,
           type: data.componentId,
           label: data.componentLabel,
+          props: {
+            content: data.componentId === 'text' ? 'Enter your text here...' : '',
+            link: '',
+            src: '',
+            alt: '',
+          },
         };
         
         const newBlocks = [...blocks];
         newBlocks.splice(insertIndex, 0, newBlock);
         setBlocks(newBlocks);
+        onBlocksChange?.(newBlocks);
         setSelectedBlockId(newBlock.id);
         onSelectBlock?.(newBlock.id);
         toast.success(`${data.componentLabel} added to canvas`);
@@ -88,7 +104,13 @@ export const Canvas = ({ onSelectBlock }: CanvasProps) => {
   };
 
   const handleSave = () => {
-    localStorage.setItem('canvas-draft', JSON.stringify(blocks));
+    const draft = {
+      id: `draft-${Date.now()}`,
+      components: blocks,
+      layout: { order: blocks.map(b => b.id) }
+    };
+    localStorage.setItem('canvas-draft', JSON.stringify(draft));
+    console.info('Previewing draft', { id: draft.id, componentCount: blocks.length });
     toast.success('Draft saved successfully');
   };
 
@@ -103,7 +125,9 @@ export const Canvas = ({ onSelectBlock }: CanvasProps) => {
 
   const handleDelete = (blockId: string) => {
     const deletedBlock = blocks.find(b => b.id === blockId);
-    setBlocks(blocks.filter(b => b.id !== blockId));
+    const newBlocks = blocks.filter(b => b.id !== blockId);
+    setBlocks(newBlocks);
+    onBlocksChange?.(newBlocks);
     setSelectedBlockId(null);
     onSelectBlock?.(null);
     
@@ -112,7 +136,11 @@ export const Canvas = ({ onSelectBlock }: CanvasProps) => {
         label: 'Undo',
         onClick: () => {
           if (deletedBlock) {
-            setBlocks(prev => [...prev, deletedBlock]);
+            setBlocks(prev => {
+              const restored = [...prev, deletedBlock];
+              onBlocksChange?.(restored);
+              return restored;
+            });
           }
         },
       },
@@ -123,15 +151,17 @@ export const Canvas = ({ onSelectBlock }: CanvasProps) => {
     const block = blocks.find(b => b.id === blockId);
     if (!block) return;
     
-    const newBlock = {
+    const newBlock: CanvasBlock = {
       ...block,
       id: `${block.type}-${Date.now()}`,
+      props: { ...block.props },
     };
     
     const index = blocks.findIndex(b => b.id === blockId);
     const newBlocks = [...blocks];
     newBlocks.splice(index + 1, 0, newBlock);
     setBlocks(newBlocks);
+    onBlocksChange?.(newBlocks);
     toast.success('Component duplicated');
   };
 
@@ -142,6 +172,7 @@ export const Canvas = ({ onSelectBlock }: CanvasProps) => {
     const newBlocks = [...blocks];
     [newBlocks[index - 1], newBlocks[index]] = [newBlocks[index], newBlocks[index - 1]];
     setBlocks(newBlocks);
+    onBlocksChange?.(newBlocks);
   };
 
   const handleMoveDown = (blockId: string) => {
@@ -151,6 +182,7 @@ export const Canvas = ({ onSelectBlock }: CanvasProps) => {
     const newBlocks = [...blocks];
     [newBlocks[index], newBlocks[index + 1]] = [newBlocks[index + 1], newBlocks[index]];
     setBlocks(newBlocks);
+    onBlocksChange?.(newBlocks);
   };
 
   // Keyboard shortcuts
@@ -409,9 +441,12 @@ export const Canvas = ({ onSelectBlock }: CanvasProps) => {
                               <div className="w-10 h-10 rounded bg-primary/10 flex items-center justify-center text-primary">
                                 {block.type.charAt(0).toUpperCase()}
                               </div>
-                              <div>
+                              <div className="flex-1">
                                 <div className="font-medium text-gray-800">{block.label}</div>
-                                <div className="text-xs text-gray-500 capitalize">{block.type.replace('-', ' ')}</div>
+                                <div className="text-xs text-gray-500 capitalize mb-2">{block.type.replace('-', ' ')}</div>
+                                {block.props.content && (
+                                  <div className="text-sm text-gray-700 line-clamp-2">{block.props.content}</div>
+                                )}
                               </div>
                             </div>
                           </div>
