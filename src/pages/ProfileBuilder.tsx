@@ -8,9 +8,13 @@ export default function ProfileBuilder() {
   const [blocks, setBlocks] = useState<CanvasBlock[]>([]);
 
   const updateBlockProps = (blockId: string, props: any) => {
-    setBlocks(prev => prev.map(block => 
-      block.id === blockId ? { ...block, props: { ...block.props, ...props } } : block
-    ));
+    setBlocks(prev => {
+      const updated = prev.map(block => 
+        block.id === blockId ? { ...block, props: { ...block.props, ...props } } : block
+      );
+      console.log('Updating block props', { blockId, props, updated });
+      return updated;
+    });
   };
 
   const selectedBlock = blocks.find(b => b.id === selectedBlockId) || null;
@@ -19,6 +23,8 @@ export default function ProfileBuilder() {
     <div className="flex h-screen w-full bg-background overflow-hidden">
       <ComponentLibrary />
       <Canvas 
+        blocks={blocks}
+        selectedBlockId={selectedBlockId}
         onSelectBlock={setSelectedBlockId} 
         onBlocksChange={setBlocks}
       />

@@ -102,8 +102,8 @@ export default function Preview() {
         ) : (
           <div className="space-y-8">
             {blocks.map((block) => {
-              const props = block.content?.content || block.props?.content || block.content;
-              const link = block.content?.link || block.props?.link;
+              const content = block.props?.content || '';
+              const link = block.props?.link || '';
               
               return (
                 <div key={block.id} className="bg-white rounded-lg border border-gray-200 p-8 shadow-sm hover:shadow-md transition-shadow">
@@ -114,14 +114,14 @@ export default function Preview() {
                     <div className="flex-1">
                       <h3 className="font-semibold text-xl text-gray-900 mb-2">{block.label}</h3>
                       <p className="text-sm text-gray-500 mb-4 capitalize">{block.type.replace('-', ' ')}</p>
-                      {props && (
+                      {content && (
                         <div className="text-gray-700 whitespace-pre-wrap">
                           {link ? (
                             <a href={link} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
-                              {props}
+                              {content}
                             </a>
                           ) : (
-                            props
+                            content
                           )}
                         </div>
                       )}

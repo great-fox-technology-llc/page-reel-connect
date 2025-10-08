@@ -34,21 +34,34 @@ interface ContextMenuState {
 }
 
 interface CanvasProps {
+  blocks: CanvasBlock[];
+  selectedBlockId: string | null;
   onSelectBlock?: (blockId: string | null) => void;
   onBlocksChange?: (blocks: CanvasBlock[]) => void;
 }
 
 export type { CanvasBlock };
 
-export const Canvas = ({ onSelectBlock, onBlocksChange }: CanvasProps) => {
+export const Canvas = ({ blocks, selectedBlockId, onSelectBlock, onBlocksChange }: CanvasProps) => {
   const navigate = useNavigate();
   const [device, setDevice] = useState<DeviceType>("desktop");
   const [zoom, setZoom] = useState(100);
-  const [blocks, setBlocks] = useState<CanvasBlock[]>([]);
-  const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [hoveredBlockId, setHoveredBlockId] = useState<string | null>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
+
+  // Auto-save whenever blocks change
+  useEffect(() => {
+    if (blocks.length > 0) {
+      const draft = {
+        id: `draft-${Date.now()}`,
+        components: blocks,
+        layout: { order: blocks.map(b => b.id) }
+      };
+      localStorage.setItem('canvas-draft', JSON.stringify(draft));
+      console.info('Draft auto-saved', { id: draft.id, componentCount: blocks.length });
+    }
+  }, [blocks]);
 
   const deviceSizes = {
     desktop: "w-full",
@@ -77,9 +90,7 @@ export const Canvas = ({ onSelectBlock, onBlocksChange }: CanvasProps) => {
         
         const newBlocks = [...blocks];
         newBlocks.splice(insertIndex, 0, newBlock);
-        setBlocks(newBlocks);
         onBlocksChange?.(newBlocks);
-        setSelectedBlockId(newBlock.id);
         onSelectBlock?.(newBlock.id);
         toast.success(`${data.componentLabel} added to canvas`);
       }
@@ -126,9 +137,7 @@ export const Canvas = ({ onSelectBlock, onBlocksChange }: CanvasProps) => {
   const handleDelete = (blockId: string) => {
     const deletedBlock = blocks.find(b => b.id === blockId);
     const newBlocks = blocks.filter(b => b.id !== blockId);
-    setBlocks(newBlocks);
     onBlocksChange?.(newBlocks);
-    setSelectedBlockId(null);
     onSelectBlock?.(null);
     
     toast.success('Component deleted', {
@@ -136,11 +145,8 @@ export const Canvas = ({ onSelectBlock, onBlocksChange }: CanvasProps) => {
         label: 'Undo',
         onClick: () => {
           if (deletedBlock) {
-            setBlocks(prev => {
-              const restored = [...prev, deletedBlock];
-              onBlocksChange?.(restored);
-              return restored;
-            });
+            const restored = [...blocks, deletedBlock];
+            onBlocksChange?.(restored);
           }
         },
       },
@@ -160,7 +166,6 @@ export const Canvas = ({ onSelectBlock, onBlocksChange }: CanvasProps) => {
     const index = blocks.findIndex(b => b.id === blockId);
     const newBlocks = [...blocks];
     newBlocks.splice(index + 1, 0, newBlock);
-    setBlocks(newBlocks);
     onBlocksChange?.(newBlocks);
     toast.success('Component duplicated');
   };
@@ -171,7 +176,6 @@ export const Canvas = ({ onSelectBlock, onBlocksChange }: CanvasProps) => {
     
     const newBlocks = [...blocks];
     [newBlocks[index - 1], newBlocks[index]] = [newBlocks[index], newBlocks[index - 1]];
-    setBlocks(newBlocks);
     onBlocksChange?.(newBlocks);
   };
 
@@ -181,7 +185,6 @@ export const Canvas = ({ onSelectBlock, onBlocksChange }: CanvasProps) => {
     
     const newBlocks = [...blocks];
     [newBlocks[index], newBlocks[index + 1]] = [newBlocks[index + 1], newBlocks[index]];
-    setBlocks(newBlocks);
     onBlocksChange?.(newBlocks);
   };
 
@@ -195,7 +198,6 @@ export const Canvas = ({ onSelectBlock, onBlocksChange }: CanvasProps) => {
       // ESC to go back or clear selection
       if (e.key === 'Escape') {
         if (selectedBlockId) {
-          setSelectedBlockId(null);
           onSelectBlock?.(null);
         } else {
           handleBack();
@@ -388,7 +390,6 @@ export const Canvas = ({ onSelectBlock, onBlocksChange }: CanvasProps) => {
                                 : "border-gray-300 hover:border-primary/50"
                             )}
                             onClick={() => {
-                              setSelectedBlockId(block.id);
                               onSelectBlock?.(block.id);
                             }}
                             onMouseEnter={() => setHoveredBlockId(block.id)}
@@ -403,7 +404,6 @@ export const Canvas = ({ onSelectBlock, onBlocksChange }: CanvasProps) => {
                                   className="h-7 px-2 text-xs"
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    setSelectedBlockId(block.id);
                                     onSelectBlock?.(block.id);
                                   }}
                                   title="Edit"
@@ -444,16 +444,15 @@ export const Canvas = ({ onSelectBlock, onBlocksChange }: CanvasProps) => {
                               <div className="flex-1">
                                 <div className="font-medium text-gray-800">{block.label}</div>
                                 <div className="text-xs text-gray-500 capitalize mb-2">{block.type.replace('-', ' ')}</div>
-                                {block.props.content && (
-                                  <div className="text-sm text-gray-700 line-clamp-2">{block.props.content}</div>
-                                )}
+                                <div className="text-sm text-gray-700 line-clamp-2">
+                                  {block.props?.content || 'Click to edit...'}
+                                </div>
                               </div>
                             </div>
                           </div>
                         </ContextMenuTrigger>
                         <ContextMenuContent>
                           <ContextMenuItem onClick={() => {
-                            setSelectedBlockId(block.id);
                             onSelectBlock?.(block.id);
                           }}>
                             Edit
