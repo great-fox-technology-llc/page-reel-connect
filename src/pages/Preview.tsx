@@ -73,16 +73,23 @@ export default function Preview() {
 
   useEffect(() => {
     const savedDraft = localStorage.getItem('canvas-draft');
+    console.info('Preview: Reading from localStorage', { draftId, hasDraft: !!savedDraft });
+    
     if (savedDraft) {
       try {
         const draft = JSON.parse(savedDraft);
+        console.info('Preview: Draft parsed', { draft, isArray: Array.isArray(draft) });
+        
         // Handle both old format (array) and new format (object with components)
         const components = Array.isArray(draft) ? draft : (draft.components || []);
+        console.info('Preview: Components extracted', { componentCount: components.length, components });
+        
         setBlocks(components);
-        console.info('Preview loaded', { draftId, componentCount: components.length });
       } catch (error) {
-        console.error('Failed to load draft:', error);
+        console.error('Preview: Failed to load draft', error);
       }
+    } else {
+      console.warn('Preview: No draft found in localStorage');
     }
   }, [draftId]);
 

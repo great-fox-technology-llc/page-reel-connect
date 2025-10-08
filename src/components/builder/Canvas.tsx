@@ -127,11 +127,23 @@ export const Canvas = ({ blocks, selectedBlockId, onSelectBlock, onBlocksChange 
 
   const handlePreview = () => {
     if (blocks.length === 0) {
-      toast.error('Save a draft to preview');
+      toast.error('Add components before previewing');
       return;
     }
-    handleSave();
-    window.open('/preview?draftId=' + Date.now(), '_blank');
+    
+    // Save draft synchronously
+    const draft = {
+      id: `draft-${Date.now()}`,
+      components: blocks,
+      layout: { order: blocks.map(b => b.id) }
+    };
+    localStorage.setItem('canvas-draft', JSON.stringify(draft));
+    console.info('Preview draft saved', { id: draft.id, componentCount: blocks.length, draft });
+    
+    // Small delay to ensure localStorage write completes
+    setTimeout(() => {
+      window.open('/preview?draftId=' + draft.id, '_blank');
+    }, 100);
   };
 
   const handleDelete = (blockId: string) => {

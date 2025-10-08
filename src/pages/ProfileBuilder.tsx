@@ -20,7 +20,7 @@ export default function ProfileBuilder() {
   const selectedBlock = blocks.find(b => b.id === selectedBlockId) || null;
 
   return (
-    <div className="flex h-screen w-full bg-background overflow-hidden">
+    <div className="flex h-screen w-full bg-background">
       <ComponentLibrary />
       <Canvas 
         blocks={blocks}
