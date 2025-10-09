@@ -1,36 +1,65 @@
-import { useState } from "react";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Bell, Plus, CheckCircle2, Circle, Eye, Users, Heart, DollarSign, TrendingUp } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-
-const quickStartTasks = [
-  { id: 1, title: "Set up your profile", description: "Add profile photo and bio", completed: true },
-  { id: 2, title: "Create your first page", description: "Use the Profile Builder to create your website", completed: false, action: "/profile-builder" },
-  { id: 3, title: "Publish your first post", description: "Share content with your audience", completed: false, action: "/posts" },
-  { id: 4, title: "Customize your theme", description: "Make your profile unique", completed: false, action: "/profile-builder" },
-  { id: 5, title: "Connect your domain", description: "Upgrade to Pro for custom domains", completed: false, action: "/settings" },
-];
-
-const stats = [
-  { label: "Profile Views", value: "1,247", change: "+12.5% from last week", icon: Eye, trend: "up" },
-  { label: "Followers", value: "856", change: "+8.2% from last week", icon: Users, trend: "up" },
-  { label: "Total Likes", value: "3,420", change: "+23.1% from last week", icon: Heart, trend: "up" },
-  { label: "Revenue", value: "$0", change: "Keep creating great content", icon: DollarSign, trend: "neutral" },
-];
+import { useAuth } from "@/contexts/AuthContext";
+import { useAnalytics } from "@/hooks/useAnalytics";
+import { useProfileProgress } from "@/hooks/useProfileProgress";
+import { formatNumber, formatCurrency } from "@/lib/format";
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const [tasks, setTasks] = useState(quickStartTasks);
-  
+  const { user, profile } = useAuth();
+  const { data: analytics, isLoading: analyticsLoading } = useAnalytics(user?.id);
+  const { data: progress, isLoading: progressLoading } = useProfileProgress(user?.id);
+
+  const tasks = [
+    { id: 1, title: "Set up your profile", description: "Add profile photo and bio", completed: progress?.hasAvatar && progress?.hasBio, action: "/settings" },
+    { id: 2, title: "Create your first page", description: "Use the Profile Builder to create your website", completed: progress?.hasProfilePage, action: "/profile-builder" },
+    { id: 3, title: "Publish your first post", description: "Share content with your audience", completed: progress?.hasPosts, action: "/posts" },
+    { id: 4, title: "Customize your theme", description: "Make your profile unique", completed: false, action: "/profile-builder" },
+  ];
+
   const completedCount = tasks.filter(t => t.completed).length;
-  const progressPercentage = (completedCount / tasks.length) * 100;
+  const progressPercentage = progress?.completionPercentage || 0;
 
   const handleTaskAction = (action?: string) => {
     if (action) navigate(action);
   };
+
+  const stats = [
+    { 
+      label: "Profile Views", 
+      value: analytics ? formatNumber(analytics.profileViews) : "0", 
+      change: analytics ? `${analytics.profileViewsChange > 0 ? '+' : ''}${analytics.profileViewsChange}% from last week` : "No data", 
+      icon: Eye, 
+      trend: analytics && analytics.profileViewsChange > 0 ? "up" : "neutral" 
+    },
+    { 
+      label: "Followers", 
+      value: analytics ? formatNumber(analytics.followers) : "0", 
+      change: analytics ? `${analytics.followersChange > 0 ? '+' : ''}${analytics.followersChange}% from last week` : "No data", 
+      icon: Users, 
+      trend: analytics && analytics.followersChange > 0 ? "up" : "neutral" 
+    },
+    { 
+      label: "Total Likes", 
+      value: analytics ? formatNumber(analytics.totalLikes) : "0", 
+      change: analytics ? `${analytics.likesChange > 0 ? '+' : ''}${analytics.likesChange}% from last week` : "No data", 
+      icon: Heart, 
+      trend: analytics && analytics.likesChange > 0 ? "up" : "neutral" 
+    },
+    { 
+      label: "Revenue", 
+      value: analytics ? formatCurrency(analytics.revenue) : "$0", 
+      change: analytics && analytics.revenue > 0 ? `${analytics.revenueChange > 0 ? '+' : ''}${analytics.revenueChange}% from last week` : "Keep creating great content", 
+      icon: DollarSign, 
+      trend: analytics && analytics.revenueChange > 0 ? "up" : "neutral" 
+    },
+  ];
 
   return (
     <div className="flex min-h-screen w-full bg-background">
@@ -42,7 +71,7 @@ export default function Dashboard() {
           <div className="flex items-center justify-between px-8 py-4">
             <div>
               <h1 className="text-3xl font-bold flex items-center gap-2">
-                Welcome back, ceo! 👋
+                Welcome back, {profile?.display_name || 'there'}! 👋
               </h1>
               <p className="text-muted-foreground mt-1">Here's what's happening with your creative work today.</p>
             </div>
@@ -116,24 +145,36 @@ export default function Dashboard() {
 
           {/* Stats Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {stats.map((stat) => {
-              const Icon = stat.icon;
-              return (
-                <Card key={stat.label} className="glass border-white/10 p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <p className="text-sm text-muted-foreground">{stat.label}</p>
-                    <Icon className="w-5 h-5 text-muted-foreground" />
-                  </div>
-                  <p className="text-3xl font-bold mb-2">{stat.value}</p>
-                  <div className="flex items-center gap-1 text-sm">
-                    {stat.trend === "up" && <TrendingUp className="w-4 h-4 text-green-500" />}
-                    <span className={stat.trend === "up" ? "text-green-500" : "text-muted-foreground"}>
-                      {stat.change}
-                    </span>
-                  </div>
-                </Card>
-              );
-            })}
+            {analyticsLoading ? (
+              <>
+                {[1, 2, 3, 4].map((i) => (
+                  <Card key={i} className="glass border-white/10 p-6">
+                    <Skeleton className="h-4 w-24 mb-4" />
+                    <Skeleton className="h-8 w-32 mb-2" />
+                    <Skeleton className="h-4 w-40" />
+                  </Card>
+                ))}
+              </>
+            ) : (
+              stats.map((stat) => {
+                const Icon = stat.icon;
+                return (
+                  <Card key={stat.label} className="glass border-white/10 p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <p className="text-sm text-muted-foreground">{stat.label}</p>
+                      <Icon className="w-5 h-5 text-muted-foreground" />
+                    </div>
+                    <p className="text-3xl font-bold mb-2">{stat.value}</p>
+                    <div className="flex items-center gap-1 text-sm">
+                      {stat.trend === "up" && <TrendingUp className="w-4 h-4 text-green-500" />}
+                      <span className={stat.trend === "up" ? "text-green-500" : "text-muted-foreground"}>
+                        {stat.change}
+                      </span>
+                    </div>
+                  </Card>
+                );
+              })
+            )}
           </div>
         </div>
       </main>
