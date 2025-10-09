@@ -47,6 +47,7 @@ const App = () => (
             <Route path="/profile-builder" element={<ProtectedRoute><ProfileBuilder /></ProtectedRoute>} />
             <Route path="/media" element={<ProtectedRoute><Media /></ProtectedRoute>} />
             <Route path="/preview" element={<Preview />} />
+            <Route path="/preview/:slug" element={<Preview />} />
             <Route path="/posts" element={<ProtectedRoute><Posts /></ProtectedRoute>} />
             <Route path="/stories" element={<ProtectedRoute><Stories /></ProtectedRoute>} />
             <Route path="/reels" element={<ProtectedRoute><Reels /></ProtectedRoute>} />

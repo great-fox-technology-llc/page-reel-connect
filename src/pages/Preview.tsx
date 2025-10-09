@@ -1,6 +1,8 @@
-import { useSearchParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
+import { useProfilePageBySlug, useTrackPageView } from "@/hooks/useProfilePages";
+import { Skeleton } from "@/components/ui/skeleton";
 import { 
   Type, 
   AlignLeft, 
@@ -68,33 +70,62 @@ const iconMap: Record<string, React.ReactNode> = {
 };
 
 export default function Preview() {
-  const [searchParams] = useSearchParams();
-  const draftId = searchParams.get('draftId');
+  const { slug } = useParams<{ slug: string }>();
   const [headerBlock, setHeaderBlock] = useState<CanvasBlock | null>(null);
   const [bodyBlocks, setBodyBlocks] = useState<CanvasBlock[]>([]);
   const [footerBlock, setFooterBlock] = useState<CanvasBlock | null>(null);
+  
+  const { data: profilePage, isLoading } = useProfilePageBySlug(slug);
+  const trackPageView = useTrackPageView();
 
+  // Track page view
   useEffect(() => {
-    const savedDraft = localStorage.getItem('canvas-draft');
-    console.info('Preview: Reading from localStorage', { draftId, hasDraft: !!savedDraft });
-    
-    if (savedDraft) {
-      try {
-        const draft = JSON.parse(savedDraft);
-        console.info('Preview: Draft parsed', { draft });
-        
-        setHeaderBlock(draft.header || null);
-        setBodyBlocks(draft.body || []);
-        setFooterBlock(draft.footer || null);
-      } catch (error) {
-        console.error('Preview: Failed to load draft', error);
-      }
-    } else {
-      console.warn('Preview: No draft found in localStorage');
+    if (profilePage && slug) {
+      trackPageView.mutate({
+        pageId: profilePage.id,
+        userId: profilePage.user_id,
+        pageType: 'profile_page',
+      });
     }
-  }, [draftId]);
+  }, [profilePage?.id, slug]);
+
+  // Load profile page from database or localStorage fallback
+  useEffect(() => {
+    if (slug && profilePage) {
+      // Load from database
+      setHeaderBlock((profilePage.header_block as unknown as CanvasBlock) || null);
+      setBodyBlocks((profilePage.body_blocks as unknown as CanvasBlock[]) || []);
+      setFooterBlock((profilePage.footer_block as unknown as CanvasBlock) || null);
+    } else if (!slug) {
+      // Fallback to localStorage for backwards compatibility
+      const savedDraft = localStorage.getItem('canvas-draft');
+      if (savedDraft) {
+        try {
+          const draft = JSON.parse(savedDraft);
+          setHeaderBlock(draft.header || null);
+          setBodyBlocks(draft.body || []);
+          setFooterBlock(draft.footer || null);
+        } catch (error) {
+          console.error('Preview: Failed to load draft', error);
+        }
+      }
+    }
+  }, [slug, profilePage]);
 
   const hasContent = headerBlock || bodyBlocks.length > 0 || footerBlock;
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-white p-8">
+        <Skeleton className="h-20 w-full mb-8" />
+        <div className="max-w-7xl mx-auto space-y-4">
+          <Skeleton className="h-40 w-full" />
+          <Skeleton className="h-40 w-full" />
+          <Skeleton className="h-40 w-full" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white">

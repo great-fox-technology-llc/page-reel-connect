@@ -36,6 +36,8 @@ interface CanvasProps {
   onHeaderChange?: (block: CanvasBlock | null) => void;
   onBodyBlocksChange?: (blocks: CanvasBlock[]) => void;
   onFooterChange?: (block: CanvasBlock | null) => void;
+  currentSlug?: string | null;
+  onSaveToDatabase?: (draft: { header: CanvasBlock | null; body: CanvasBlock[]; footer: CanvasBlock | null }) => Promise<void>;
 }
 
 export type { CanvasBlock };
@@ -48,7 +50,9 @@ export const Canvas = ({
   onSelectBlock, 
   onHeaderChange, 
   onBodyBlocksChange, 
-  onFooterChange 
+  onFooterChange,
+  currentSlug,
+  onSaveToDatabase
 }: CanvasProps) => {
   const navigate = useNavigate();
   const [device, setDevice] = useState<DeviceType>("desktop");
@@ -301,46 +305,52 @@ export const Canvas = ({
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const draft = {
-      id: `draft-${Date.now()}`,
       header: headerBlock,
       body: safeBodyBlocks,
       footer: footerBlock,
+    };
+    
+    // Save to database
+    if (onSaveToDatabase) {
+      try {
+        await onSaveToDatabase(draft);
+        toast.success('Changes saved to database');
+      } catch (error) {
+        toast.error('Failed to save to database');
+        console.error('Save error:', error);
+      }
+    }
+    
+    // Keep localStorage as backup
+    const localDraft = {
+      id: `draft-${Date.now()}`,
+      ...draft,
       layout: {
         headerOrder: headerBlock ? [headerBlock.id] : [],
         bodyOrder: safeBodyBlocks.map(b => b.id),
         footerOrder: footerBlock ? [footerBlock.id] : []
       }
     };
-    localStorage.setItem('canvas-draft', JSON.stringify(draft));
-    console.info('Draft saved', { id: draft.id });
-    toast.success('Draft saved successfully');
+    localStorage.setItem('canvas-draft', JSON.stringify(localDraft));
   };
 
-  const handlePreview = () => {
+  const handlePreview = async () => {
     if (!headerBlock && safeBodyBlocks.length === 0 && !footerBlock) {
       toast.error('Add components before previewing');
       return;
     }
     
-    const draft = {
-      id: `draft-${Date.now()}`,
-      header: headerBlock,
-      body: safeBodyBlocks,
-      footer: footerBlock,
-      layout: {
-        headerOrder: headerBlock ? [headerBlock.id] : [],
-        bodyOrder: safeBodyBlocks.map(b => b.id),
-        footerOrder: footerBlock ? [footerBlock.id] : []
-      }
-    };
-    localStorage.setItem('canvas-draft', JSON.stringify(draft));
-    console.info('Preview draft saved', { id: draft.id, draft });
+    // Save to database first
+    await handleSave();
     
-    setTimeout(() => {
-      window.open('/preview?draftId=' + draft.id, '_blank');
-    }, 100);
+    // Open preview with slug or fallback to localStorage
+    if (currentSlug) {
+      window.open(`/preview/${currentSlug}`, '_blank');
+    } else {
+      toast.error('Please save your page first to preview');
+    }
   };
 
   const handleDeleteHeader = () => {
