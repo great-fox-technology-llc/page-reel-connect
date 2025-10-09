@@ -42,7 +42,7 @@ export type { CanvasBlock };
 
 export const Canvas = ({ 
   headerBlock, 
-  bodyBlocks, 
+  bodyBlocks = [], 
   footerBlock, 
   selectedBlockId, 
   onSelectBlock, 
@@ -58,23 +58,26 @@ export const Canvas = ({
   const [footerDragOver, setFooterDragOver] = useState(false);
   const [hoveredBlockId, setHoveredBlockId] = useState<string | null>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
+  
+  // Safety check for undefined props during hot reload
+  const safeBodyBlocks = bodyBlocks || [];
 
   // Auto-save whenever blocks change
   useEffect(() => {
     const draft = {
       id: `draft-${Date.now()}`,
       header: headerBlock,
-      body: bodyBlocks,
+      body: safeBodyBlocks,
       footer: footerBlock,
       layout: {
         headerOrder: headerBlock ? [headerBlock.id] : [],
-        bodyOrder: bodyBlocks.map(b => b.id),
+        bodyOrder: safeBodyBlocks.map(b => b.id),
         footerOrder: footerBlock ? [footerBlock.id] : []
       }
     };
     localStorage.setItem('canvas-draft', JSON.stringify(draft));
-    console.info('Draft auto-saved', { id: draft.id, zones: { header: !!headerBlock, body: bodyBlocks.length, footer: !!footerBlock } });
-  }, [headerBlock, bodyBlocks, footerBlock]);
+    console.info('Draft auto-saved', { id: draft.id, zones: { header: !!headerBlock, body: safeBodyBlocks.length, footer: !!footerBlock } });
+  }, [headerBlock, safeBodyBlocks, footerBlock]);
 
   const deviceSizes = {
     desktop: "w-full",
@@ -272,7 +275,7 @@ export const Canvas = ({
           },
         };
         
-        const newBlocks = [...bodyBlocks];
+        const newBlocks = [...safeBodyBlocks];
         newBlocks.splice(insertIndex, 0, newBlock);
         onBodyBlocksChange?.(newBlocks);
         onSelectBlock?.(newBlock.id);
@@ -289,7 +292,7 @@ export const Canvas = ({
   };
 
   const handleBack = () => {
-    if (headerBlock || bodyBlocks.length > 0 || footerBlock) {
+    if (headerBlock || safeBodyBlocks.length > 0 || footerBlock) {
       if (confirm('You have unsaved changes. Are you sure you want to leave?')) {
         navigate('/dashboard');
       }
@@ -302,11 +305,11 @@ export const Canvas = ({
     const draft = {
       id: `draft-${Date.now()}`,
       header: headerBlock,
-      body: bodyBlocks,
+      body: safeBodyBlocks,
       footer: footerBlock,
       layout: {
         headerOrder: headerBlock ? [headerBlock.id] : [],
-        bodyOrder: bodyBlocks.map(b => b.id),
+        bodyOrder: safeBodyBlocks.map(b => b.id),
         footerOrder: footerBlock ? [footerBlock.id] : []
       }
     };
@@ -316,7 +319,7 @@ export const Canvas = ({
   };
 
   const handlePreview = () => {
-    if (!headerBlock && bodyBlocks.length === 0 && !footerBlock) {
+    if (!headerBlock && safeBodyBlocks.length === 0 && !footerBlock) {
       toast.error('Add components before previewing');
       return;
     }
@@ -324,11 +327,11 @@ export const Canvas = ({
     const draft = {
       id: `draft-${Date.now()}`,
       header: headerBlock,
-      body: bodyBlocks,
+      body: safeBodyBlocks,
       footer: footerBlock,
       layout: {
         headerOrder: headerBlock ? [headerBlock.id] : [],
-        bodyOrder: bodyBlocks.map(b => b.id),
+        bodyOrder: safeBodyBlocks.map(b => b.id),
         footerOrder: footerBlock ? [footerBlock.id] : []
       }
     };
@@ -375,8 +378,8 @@ export const Canvas = ({
   };
 
   const handleDeleteBody = (blockId: string) => {
-    const deletedBlock = bodyBlocks.find(b => b.id === blockId);
-    const newBlocks = bodyBlocks.filter(b => b.id !== blockId);
+    const deletedBlock = safeBodyBlocks.find(b => b.id === blockId);
+    const newBlocks = safeBodyBlocks.filter(b => b.id !== blockId);
     onBodyBlocksChange?.(newBlocks);
     onSelectBlock?.(null);
     
@@ -385,7 +388,7 @@ export const Canvas = ({
         label: 'Undo',
         onClick: () => {
           if (deletedBlock) {
-            onBodyBlocksChange?.([...bodyBlocks, deletedBlock]);
+            onBodyBlocksChange?.([...safeBodyBlocks, deletedBlock]);
           }
         },
       },
@@ -393,7 +396,7 @@ export const Canvas = ({
   };
 
   const handleDuplicate = (blockId: string) => {
-    const block = bodyBlocks.find(b => b.id === blockId);
+    const block = safeBodyBlocks.find(b => b.id === blockId);
     if (!block) return;
     
     const newBlock: CanvasBlock = {
@@ -402,27 +405,27 @@ export const Canvas = ({
       props: { ...block.props },
     };
     
-    const index = bodyBlocks.findIndex(b => b.id === blockId);
-    const newBlocks = [...bodyBlocks];
+    const index = safeBodyBlocks.findIndex(b => b.id === blockId);
+    const newBlocks = [...safeBodyBlocks];
     newBlocks.splice(index + 1, 0, newBlock);
     onBodyBlocksChange?.(newBlocks);
     toast.success('Component duplicated');
   };
 
   const handleMoveUp = (blockId: string) => {
-    const index = bodyBlocks.findIndex(b => b.id === blockId);
+    const index = safeBodyBlocks.findIndex(b => b.id === blockId);
     if (index <= 0) return;
     
-    const newBlocks = [...bodyBlocks];
+    const newBlocks = [...safeBodyBlocks];
     [newBlocks[index - 1], newBlocks[index]] = [newBlocks[index], newBlocks[index - 1]];
     onBodyBlocksChange?.(newBlocks);
   };
 
   const handleMoveDown = (blockId: string) => {
-    const index = bodyBlocks.findIndex(b => b.id === blockId);
-    if (index >= bodyBlocks.length - 1) return;
+    const index = safeBodyBlocks.findIndex(b => b.id === blockId);
+    if (index >= safeBodyBlocks.length - 1) return;
     
-    const newBlocks = [...bodyBlocks];
+    const newBlocks = [...safeBodyBlocks];
     [newBlocks[index], newBlocks[index + 1]] = [newBlocks[index + 1], newBlocks[index]];
     onBodyBlocksChange?.(newBlocks);
   };
@@ -496,7 +499,7 @@ export const Canvas = ({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [headerBlock, bodyBlocks, footerBlock, selectedBlockId]);
+  }, [headerBlock, safeBodyBlocks, footerBlock, selectedBlockId]);
 
   return (
     <div className="flex-1 flex flex-col bg-muted/30">
@@ -575,7 +578,7 @@ export const Canvas = ({
             size="sm" 
             className="gap-2"
             onClick={handlePreview}
-            disabled={!headerBlock && bodyBlocks.length === 0 && !footerBlock}
+            disabled={!headerBlock && safeBodyBlocks.length === 0 && !footerBlock}
             title="Preview (P)"
           >
             <Eye className="w-4 h-4" />
@@ -690,7 +693,7 @@ export const Canvas = ({
                 <div className="text-xs text-muted-foreground mb-2 font-medium uppercase tracking-wide">
                   Body Zone (Multi Instance)
                 </div>
-                {bodyBlocks.length === 0 ? (
+                {safeBodyBlocks.length === 0 ? (
                   <div
                     className={cn(
                       "border-2 border-dashed rounded-lg py-20 px-12 text-center transition-all min-h-[400px] flex flex-col items-center justify-center",
@@ -728,7 +731,7 @@ export const Canvas = ({
                       )}
                     </div>
 
-                    {bodyBlocks.map((block, index) => (
+                    {safeBodyBlocks.map((block, index) => (
                       <div key={block.id}>
                         <ContextMenu>
                           <ContextMenuTrigger>
@@ -815,7 +818,7 @@ export const Canvas = ({
                             </ContextMenuItem>
                             <ContextMenuItem 
                               onClick={() => handleMoveDown(block.id)}
-                              disabled={index === bodyBlocks.length - 1}
+                              disabled={index === safeBodyBlocks.length - 1}
                             >
                               <ChevronDown className="w-4 h-4 mr-2" />
                               Move Down
