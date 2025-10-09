@@ -23,7 +23,9 @@ import {
   RectangleHorizontal,
   Rocket,
   Palette,
-  Mail
+  Mail,
+  LayoutDashboard,
+  PanelBottom
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -35,6 +37,8 @@ interface ComponentItem {
 }
 
 const iconMap: Record<string, React.ReactNode> = {
+  header: <LayoutDashboard className="w-5 h-5" />,
+  footer: <PanelBottom className="w-5 h-5" />,
   heading: <Type className="w-5 h-5" />,
   text: <AlignLeft className="w-5 h-5" />,
   image: <ImageIcon className="w-5 h-5" />,
@@ -61,6 +65,14 @@ const iconMap: Record<string, React.ReactNode> = {
 };
 
 const componentGroups = [
+  {
+    title: "STRUCTURE COMPONENTS",
+    isPro: false,
+    items: [
+      { id: "header", label: "Header" },
+      { id: "footer", label: "Footer" },
+    ]
+  },
   {
     title: "BASIC COMPONENTS",
     isPro: false,

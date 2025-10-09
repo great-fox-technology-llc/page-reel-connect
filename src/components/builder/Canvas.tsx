@@ -1,4 +1,4 @@
-import { Monitor, Smartphone, Tablet, ArrowLeft, Save, Eye, Upload, MoreVertical, Copy, Trash2, ChevronUp, ChevronDown, LayoutGrid, Edit3 } from "lucide-react";
+import { Monitor, Smartphone, Tablet, ArrowLeft, Save, Eye, Upload, MoreVertical, Copy, Trash2, ChevronUp, ChevronDown, LayoutGrid, Edit3, LayoutDashboard, PanelBottom } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
@@ -17,6 +17,7 @@ interface CanvasBlock {
   id: string;
   type: string;
   label: string;
+  zone?: 'header' | 'body' | 'footer';
   props: {
     content?: string;
     link?: string;
@@ -26,42 +27,54 @@ interface CanvasBlock {
   };
 }
 
-interface ContextMenuState {
-  show: boolean;
-  x: number;
-  y: number;
-  blockId: string | null;
-}
-
 interface CanvasProps {
-  blocks: CanvasBlock[];
+  headerBlock: CanvasBlock | null;
+  bodyBlocks: CanvasBlock[];
+  footerBlock: CanvasBlock | null;
   selectedBlockId: string | null;
   onSelectBlock?: (blockId: string | null) => void;
-  onBlocksChange?: (blocks: CanvasBlock[]) => void;
+  onHeaderChange?: (block: CanvasBlock | null) => void;
+  onBodyBlocksChange?: (blocks: CanvasBlock[]) => void;
+  onFooterChange?: (block: CanvasBlock | null) => void;
 }
 
 export type { CanvasBlock };
 
-export const Canvas = ({ blocks, selectedBlockId, onSelectBlock, onBlocksChange }: CanvasProps) => {
+export const Canvas = ({ 
+  headerBlock, 
+  bodyBlocks, 
+  footerBlock, 
+  selectedBlockId, 
+  onSelectBlock, 
+  onHeaderChange, 
+  onBodyBlocksChange, 
+  onFooterChange 
+}: CanvasProps) => {
   const navigate = useNavigate();
   const [device, setDevice] = useState<DeviceType>("desktop");
   const [zoom, setZoom] = useState(100);
-  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  const [headerDragOver, setHeaderDragOver] = useState(false);
+  const [bodyDragOverIndex, setBodyDragOverIndex] = useState<number | null>(null);
+  const [footerDragOver, setFooterDragOver] = useState(false);
   const [hoveredBlockId, setHoveredBlockId] = useState<string | null>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
 
   // Auto-save whenever blocks change
   useEffect(() => {
-    if (blocks.length > 0) {
-      const draft = {
-        id: `draft-${Date.now()}`,
-        components: blocks,
-        layout: { order: blocks.map(b => b.id) }
-      };
-      localStorage.setItem('canvas-draft', JSON.stringify(draft));
-      console.info('Draft auto-saved', { id: draft.id, componentCount: blocks.length });
-    }
-  }, [blocks]);
+    const draft = {
+      id: `draft-${Date.now()}`,
+      header: headerBlock,
+      body: bodyBlocks,
+      footer: footerBlock,
+      layout: {
+        headerOrder: headerBlock ? [headerBlock.id] : [],
+        bodyOrder: bodyBlocks.map(b => b.id),
+        footerOrder: footerBlock ? [footerBlock.id] : []
+      }
+    };
+    localStorage.setItem('canvas-draft', JSON.stringify(draft));
+    console.info('Draft auto-saved', { id: draft.id, zones: { header: !!headerBlock, body: bodyBlocks.length, footer: !!footerBlock } });
+  }, [headerBlock, bodyBlocks, footerBlock]);
 
   const deviceSizes = {
     desktop: "w-full",
@@ -69,17 +82,188 @@ export const Canvas = ({ blocks, selectedBlockId, onSelectBlock, onBlocksChange 
     mobile: "w-[375px]",
   };
 
-  const handleDrop = (e: React.DragEvent, insertIndex: number) => {
+  const handleHeaderDrop = (e: React.DragEvent) => {
     e.preventDefault();
-    setDragOverIndex(null);
+    setHeaderDragOver(false);
+    
+    try {
+      const data = JSON.parse(e.dataTransfer.getData('application/json'));
+      if (data.type === 'component' && data.componentId === 'header') {
+        if (headerBlock) {
+          toast.error('Only one header per page');
+          return;
+        }
+        
+        const newBlock: CanvasBlock = {
+          id: `header-${Date.now()}`,
+          type: 'header',
+          label: 'Header',
+          zone: 'header',
+          props: {
+            displayName: 'Your Name',
+            handle: '@yourhandle',
+            bioSnippet: 'Your bio goes here',
+            avatar: '/placeholder.svg',
+            navItems: [
+              { label: 'Home', url: '/', order: 0 },
+              { label: 'About', url: '/about', order: 1 },
+              { label: 'Portfolio', url: '/portfolio', order: 2 },
+              { label: 'Services', url: '/services', order: 3 },
+              { label: 'Posts', url: '/posts', order: 4 },
+              { label: 'Reels', url: '/reels', order: 5 },
+              { label: 'Stories', url: '/stories', order: 6 },
+              { label: 'Contact', url: '/contact', order: 7 },
+            ],
+            showSearch: true,
+            showCTA: true,
+            ctaLabel: 'Get Started',
+            ctaLink: '#',
+            showThemeToggle: true,
+            showLanguage: false,
+            showNotifications: true,
+            showMessages: true,
+            showCart: true,
+            cartBadge: 3,
+            showFollowers: true,
+            followersCount: 1247,
+            followingCount: 856,
+            layoutWidth: 'full',
+            height: 80,
+            isSticky: true,
+            transparentUntilScroll: false,
+            paddingX: 24,
+            paddingY: 16,
+            gap: 16,
+            navBorderRadius: 8,
+            backgroundColor: '#ffffff',
+            surfaceColor: '#f8f9fa',
+            textColor: '#121726',
+            accentColor: '#4368D9',
+            shadowPreset: 'md',
+            brandFontSize: 20,
+            navFontSize: 14,
+            counterFontSize: 12,
+            collapseBreakpoint: 768,
+            visibleMobile: true,
+            visibleTablet: true,
+            visibleDesktop: true,
+          },
+        };
+        
+        onHeaderChange?.(newBlock);
+        onSelectBlock?.(newBlock.id);
+        toast.success('Header added to canvas');
+      }
+    } catch (error) {
+      console.error('Header drop error:', error);
+    }
+  };
+
+  const handleFooterDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setFooterDragOver(false);
+    
+    try {
+      const data = JSON.parse(e.dataTransfer.getData('application/json'));
+      if (data.type === 'component' && data.componentId === 'footer') {
+        if (footerBlock) {
+          toast.error('Only one footer per page');
+          return;
+        }
+        
+        const newBlock: CanvasBlock = {
+          id: `footer-${Date.now()}`,
+          type: 'footer',
+          label: 'Footer',
+          zone: 'footer',
+          props: {
+            columns: [
+              {
+                title: 'Product',
+                links: [
+                  { label: 'Features', url: '/features' },
+                  { label: 'Pricing', url: '/pricing' },
+                  { label: 'FAQ', url: '/faq' },
+                ]
+              },
+              {
+                title: 'Company',
+                links: [
+                  { label: 'About', url: '/about' },
+                  { label: 'Blog', url: '/blog' },
+                  { label: 'Careers', url: '/careers' },
+                ]
+              },
+              {
+                title: 'Resources',
+                links: [
+                  { label: 'Documentation', url: '/docs' },
+                  { label: 'Support', url: '/support' },
+                  { label: 'API', url: '/api' },
+                ]
+              },
+              {
+                title: 'Legal',
+                links: [
+                  { label: 'Privacy', url: '/privacy' },
+                  { label: 'Terms', url: '/terms' },
+                  { label: 'Cookies', url: '/cookies' },
+                ]
+              },
+            ],
+            socialLinks: [
+              { platform: 'Twitter', url: 'https://twitter.com', icon: 'twitter' },
+              { platform: 'Instagram', url: 'https://instagram.com', icon: 'instagram' },
+              { platform: 'LinkedIn', url: 'https://linkedin.com', icon: 'linkedin' },
+              { platform: 'GitHub', url: 'https://github.com', icon: 'github' },
+            ],
+            showNewsletter: true,
+            newsletterTitle: 'Stay Updated',
+            copyrightYear: new Date().getFullYear(),
+            siteName: 'Your Site',
+            legalLinks: [
+              { label: 'Terms', url: '/terms' },
+              { label: 'Privacy', url: '/privacy' },
+              { label: 'Cookies', url: '/cookies' },
+            ],
+            footerLayoutWidth: 'full',
+            footerBackgroundColor: '#121726',
+            footerTextColor: '#C1C9D1',
+            dividerColor: '#ffffff20',
+            gridGap: 32,
+            cardVariant: 'glass',
+            visibleMobile: true,
+            visibleTablet: true,
+            visibleDesktop: true,
+          },
+        };
+        
+        onFooterChange?.(newBlock);
+        onSelectBlock?.(newBlock.id);
+        toast.success('Footer added to canvas');
+      }
+    } catch (error) {
+      console.error('Footer drop error:', error);
+    }
+  };
+
+  const handleBodyDrop = (e: React.DragEvent, insertIndex: number) => {
+    e.preventDefault();
+    setBodyDragOverIndex(null);
     
     try {
       const data = JSON.parse(e.dataTransfer.getData('application/json'));
       if (data.type === 'component') {
+        if (data.componentId === 'header' || data.componentId === 'footer') {
+          toast.error(`${data.componentLabel} must be placed in its designated zone`);
+          return;
+        }
+        
         const newBlock: CanvasBlock = {
           id: `${data.componentId}-${Date.now()}`,
           type: data.componentId,
           label: data.componentLabel,
+          zone: 'body',
           props: {
             content: data.componentId === 'text' ? 'Enter your text here...' : '',
             link: '',
@@ -88,14 +272,14 @@ export const Canvas = ({ blocks, selectedBlockId, onSelectBlock, onBlocksChange 
           },
         };
         
-        const newBlocks = [...blocks];
+        const newBlocks = [...bodyBlocks];
         newBlocks.splice(insertIndex, 0, newBlock);
-        onBlocksChange?.(newBlocks);
+        onBodyBlocksChange?.(newBlocks);
         onSelectBlock?.(newBlock.id);
         toast.success(`${data.componentLabel} added to canvas`);
       }
     } catch (error) {
-      console.error('Drop error:', error);
+      console.error('Body drop error:', error);
     }
   };
 
@@ -105,7 +289,7 @@ export const Canvas = ({ blocks, selectedBlockId, onSelectBlock, onBlocksChange 
   };
 
   const handleBack = () => {
-    if (blocks.length > 0) {
+    if (headerBlock || bodyBlocks.length > 0 || footerBlock) {
       if (confirm('You have unsaved changes. Are you sure you want to leave?')) {
         navigate('/dashboard');
       }
@@ -117,39 +301,83 @@ export const Canvas = ({ blocks, selectedBlockId, onSelectBlock, onBlocksChange 
   const handleSave = () => {
     const draft = {
       id: `draft-${Date.now()}`,
-      components: blocks,
-      layout: { order: blocks.map(b => b.id) }
+      header: headerBlock,
+      body: bodyBlocks,
+      footer: footerBlock,
+      layout: {
+        headerOrder: headerBlock ? [headerBlock.id] : [],
+        bodyOrder: bodyBlocks.map(b => b.id),
+        footerOrder: footerBlock ? [footerBlock.id] : []
+      }
     };
     localStorage.setItem('canvas-draft', JSON.stringify(draft));
-    console.info('Previewing draft', { id: draft.id, componentCount: blocks.length });
+    console.info('Draft saved', { id: draft.id });
     toast.success('Draft saved successfully');
   };
 
   const handlePreview = () => {
-    if (blocks.length === 0) {
+    if (!headerBlock && bodyBlocks.length === 0 && !footerBlock) {
       toast.error('Add components before previewing');
       return;
     }
     
-    // Save draft synchronously
     const draft = {
       id: `draft-${Date.now()}`,
-      components: blocks,
-      layout: { order: blocks.map(b => b.id) }
+      header: headerBlock,
+      body: bodyBlocks,
+      footer: footerBlock,
+      layout: {
+        headerOrder: headerBlock ? [headerBlock.id] : [],
+        bodyOrder: bodyBlocks.map(b => b.id),
+        footerOrder: footerBlock ? [footerBlock.id] : []
+      }
     };
     localStorage.setItem('canvas-draft', JSON.stringify(draft));
-    console.info('Preview draft saved', { id: draft.id, componentCount: blocks.length, draft });
+    console.info('Preview draft saved', { id: draft.id, draft });
     
-    // Small delay to ensure localStorage write completes
     setTimeout(() => {
       window.open('/preview?draftId=' + draft.id, '_blank');
     }, 100);
   };
 
-  const handleDelete = (blockId: string) => {
-    const deletedBlock = blocks.find(b => b.id === blockId);
-    const newBlocks = blocks.filter(b => b.id !== blockId);
-    onBlocksChange?.(newBlocks);
+  const handleDeleteHeader = () => {
+    if (headerBlock) {
+      const deleted = headerBlock;
+      onHeaderChange?.(null);
+      onSelectBlock?.(null);
+      
+      toast.success('Header deleted', {
+        action: {
+          label: 'Undo',
+          onClick: () => {
+            onHeaderChange?.(deleted);
+          },
+        },
+      });
+    }
+  };
+
+  const handleDeleteFooter = () => {
+    if (footerBlock) {
+      const deleted = footerBlock;
+      onFooterChange?.(null);
+      onSelectBlock?.(null);
+      
+      toast.success('Footer deleted', {
+        action: {
+          label: 'Undo',
+          onClick: () => {
+            onFooterChange?.(deleted);
+          },
+        },
+      });
+    }
+  };
+
+  const handleDeleteBody = (blockId: string) => {
+    const deletedBlock = bodyBlocks.find(b => b.id === blockId);
+    const newBlocks = bodyBlocks.filter(b => b.id !== blockId);
+    onBodyBlocksChange?.(newBlocks);
     onSelectBlock?.(null);
     
     toast.success('Component deleted', {
@@ -157,8 +385,7 @@ export const Canvas = ({ blocks, selectedBlockId, onSelectBlock, onBlocksChange 
         label: 'Undo',
         onClick: () => {
           if (deletedBlock) {
-            const restored = [...blocks, deletedBlock];
-            onBlocksChange?.(restored);
+            onBodyBlocksChange?.([...bodyBlocks, deletedBlock]);
           }
         },
       },
@@ -166,7 +393,7 @@ export const Canvas = ({ blocks, selectedBlockId, onSelectBlock, onBlocksChange 
   };
 
   const handleDuplicate = (blockId: string) => {
-    const block = blocks.find(b => b.id === blockId);
+    const block = bodyBlocks.find(b => b.id === blockId);
     if (!block) return;
     
     const newBlock: CanvasBlock = {
@@ -175,29 +402,39 @@ export const Canvas = ({ blocks, selectedBlockId, onSelectBlock, onBlocksChange 
       props: { ...block.props },
     };
     
-    const index = blocks.findIndex(b => b.id === blockId);
-    const newBlocks = [...blocks];
+    const index = bodyBlocks.findIndex(b => b.id === blockId);
+    const newBlocks = [...bodyBlocks];
     newBlocks.splice(index + 1, 0, newBlock);
-    onBlocksChange?.(newBlocks);
+    onBodyBlocksChange?.(newBlocks);
     toast.success('Component duplicated');
   };
 
   const handleMoveUp = (blockId: string) => {
-    const index = blocks.findIndex(b => b.id === blockId);
+    const index = bodyBlocks.findIndex(b => b.id === blockId);
     if (index <= 0) return;
     
-    const newBlocks = [...blocks];
+    const newBlocks = [...bodyBlocks];
     [newBlocks[index - 1], newBlocks[index]] = [newBlocks[index], newBlocks[index - 1]];
-    onBlocksChange?.(newBlocks);
+    onBodyBlocksChange?.(newBlocks);
   };
 
   const handleMoveDown = (blockId: string) => {
-    const index = blocks.findIndex(b => b.id === blockId);
-    if (index >= blocks.length - 1) return;
+    const index = bodyBlocks.findIndex(b => b.id === blockId);
+    if (index >= bodyBlocks.length - 1) return;
     
-    const newBlocks = [...blocks];
+    const newBlocks = [...bodyBlocks];
     [newBlocks[index], newBlocks[index + 1]] = [newBlocks[index + 1], newBlocks[index]];
-    onBlocksChange?.(newBlocks);
+    onBodyBlocksChange?.(newBlocks);
+  };
+
+  const scrollToHeader = () => {
+    const headerEl = document.getElementById('canvas-header-zone');
+    headerEl?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  const scrollToFooter = () => {
+    const footerEl = document.getElementById('canvas-footer-zone');
+    footerEl?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
   // Keyboard shortcuts
@@ -207,7 +444,6 @@ export const Canvas = ({ blocks, selectedBlockId, onSelectBlock, onBlocksChange 
       const ctrlOrCmd = isMac ? e.metaKey : e.ctrlKey;
       const isInputFocused = e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement;
       
-      // ESC to go back or clear selection
       if (e.key === 'Escape') {
         if (selectedBlockId) {
           onSelectBlock?.(null);
@@ -219,7 +455,6 @@ export const Canvas = ({ blocks, selectedBlockId, onSelectBlock, onBlocksChange 
       
       if (isInputFocused) return;
       
-      // P for preview
       if (e.key === 'p' || e.key === 'P') {
         e.preventDefault();
         handlePreview();
@@ -228,28 +463,30 @@ export const Canvas = ({ blocks, selectedBlockId, onSelectBlock, onBlocksChange 
       
       if (!selectedBlockId) return;
       
-      // Delete/Backspace to remove selected
       if (e.key === 'Delete' || e.key === 'Backspace') {
         e.preventDefault();
-        handleDelete(selectedBlockId);
+        if (headerBlock?.id === selectedBlockId) {
+          handleDeleteHeader();
+        } else if (footerBlock?.id === selectedBlockId) {
+          handleDeleteFooter();
+        } else {
+          handleDeleteBody(selectedBlockId);
+        }
         return;
       }
       
-      // Cmd/Ctrl + D to duplicate
       if (ctrlOrCmd && (e.key === 'd' || e.key === 'D')) {
         e.preventDefault();
         handleDuplicate(selectedBlockId);
         return;
       }
       
-      // Cmd/Ctrl + Arrow Up to move up
       if (ctrlOrCmd && e.key === 'ArrowUp') {
         e.preventDefault();
         handleMoveUp(selectedBlockId);
         return;
       }
       
-      // Cmd/Ctrl + Arrow Down to move down
       if (ctrlOrCmd && e.key === 'ArrowDown') {
         e.preventDefault();
         handleMoveDown(selectedBlockId);
@@ -259,7 +496,7 @@ export const Canvas = ({ blocks, selectedBlockId, onSelectBlock, onBlocksChange 
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [blocks, selectedBlockId]);
+  }, [headerBlock, bodyBlocks, footerBlock, selectedBlockId]);
 
   return (
     <div className="flex-1 flex flex-col bg-muted/30">
@@ -300,6 +537,24 @@ export const Canvas = ({ blocks, selectedBlockId, onSelectBlock, onBlocksChange 
         </div>
 
         <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={scrollToHeader}
+            disabled={!headerBlock}
+            title="Scroll to Header"
+          >
+            Header
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={scrollToFooter}
+            disabled={!footerBlock}
+            title="Scroll to Footer"
+          >
+            Footer
+          </Button>
           <select 
             value={zoom} 
             onChange={(e) => setZoom(Number(e.target.value))}
@@ -320,8 +575,8 @@ export const Canvas = ({ blocks, selectedBlockId, onSelectBlock, onBlocksChange 
             size="sm" 
             className="gap-2"
             onClick={handlePreview}
-            disabled={blocks.length === 0}
-            title={blocks.length === 0 ? "Save a draft to preview" : "Preview (P)"}
+            disabled={!headerBlock && bodyBlocks.length === 0 && !footerBlock}
+            title="Preview (P)"
           >
             <Eye className="w-4 h-4" />
             Preview
@@ -349,175 +604,333 @@ export const Canvas = ({ blocks, selectedBlockId, onSelectBlock, onBlocksChange 
             }}
             onDragOver={handleDragOver}
           >
-            {/* Canvas Content */}
             <div className="min-h-[calc(100vh-120px)] p-8 pb-6">
-              {blocks.length === 0 ? (
-                <div
-                  className={cn(
-                    "border-2 border-dashed rounded-lg py-20 px-12 text-center transition-all min-h-[400px] flex flex-col items-center justify-center",
-                    dragOverIndex === 0
-                      ? "border-primary bg-primary/10"
-                      : "border-gray-300 hover:border-primary/50 hover:bg-primary/5"
-                  )}
-                  onDrop={(e) => handleDrop(e, 0)}
-                  onDragEnter={() => setDragOverIndex(0)}
-                  onDragLeave={() => setDragOverIndex(null)}
-                >
-                  <LayoutGrid className="w-16 h-16 text-gray-300 mb-4" />
-                  <p className="text-gray-600 font-medium mb-2 text-lg">Start Building Your Profile</p>
-                  <p className="text-sm text-gray-500">
-                    Drag components from the left sidebar to begin
-                  </p>
+              {/* HEADER ZONE */}
+              <div id="canvas-header-zone" className="mb-4">
+                <div className="text-xs text-muted-foreground mb-2 font-medium uppercase tracking-wide">
+                  Header Zone (Single Instance)
                 </div>
-              ) : (
-                <div className="space-y-2">
-                  {/* Top drop zone */}
+                {!headerBlock ? (
                   <div
                     className={cn(
-                      "h-12 border-2 border-dashed rounded transition-all flex items-center justify-center",
-                      dragOverIndex === 0
+                      "border-2 border-dashed rounded-lg py-12 px-8 text-center transition-all",
+                      headerDragOver
                         ? "border-primary bg-primary/10"
-                        : "border-transparent hover:border-primary/30"
+                        : "border-gray-300 hover:border-primary/50 hover:bg-primary/5"
                     )}
-                    onDrop={(e) => handleDrop(e, 0)}
-                    onDragEnter={() => setDragOverIndex(0)}
-                    onDragLeave={() => setDragOverIndex(null)}
+                    onDrop={handleHeaderDrop}
+                    onDragEnter={() => setHeaderDragOver(true)}
+                    onDragLeave={() => setHeaderDragOver(false)}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      e.dataTransfer.dropEffect = 'copy';
+                    }}
+                  >
+                    <LayoutDashboard className="w-12 h-12 text-gray-300 mb-3 mx-auto" />
+                    <p className="text-gray-600 font-medium mb-1">Drop Header Here</p>
+                    <p className="text-xs text-gray-500">
+                      Drag the Header component from the left sidebar
+                    </p>
+                  </div>
+                ) : (
+                  <ContextMenu>
+                    <ContextMenuTrigger>
+                      <div
+                        className={cn(
+                          "relative border-2 rounded-lg p-6 transition-all cursor-pointer group",
+                          selectedBlockId === headerBlock.id
+                            ? "border-primary bg-primary/5 ring-2 ring-primary/20"
+                            : "border-gray-300 hover:border-primary/50"
+                        )}
+                        onClick={() => onSelectBlock?.(headerBlock.id)}
+                      >
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            className="h-7 px-2 text-xs text-destructive hover:text-destructive"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteHeader();
+                            }}
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
+                        </div>
+                        
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded bg-primary/10 flex items-center justify-center text-primary">
+                            <LayoutDashboard className="w-5 h-5" />
+                          </div>
+                          <div className="flex-1">
+                            <div className="font-medium text-gray-800">{headerBlock.label}</div>
+                            <div className="text-xs text-gray-500">Header Component</div>
+                            <div className="text-sm text-gray-700 mt-1">
+                              {headerBlock.props?.displayName || 'Header'}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </ContextMenuTrigger>
+                    <ContextMenuContent>
+                      <ContextMenuItem onClick={() => onSelectBlock?.(headerBlock.id)}>
+                        Edit
+                      </ContextMenuItem>
+                      <ContextMenuItem onClick={handleDeleteHeader} className="text-destructive">
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Delete
+                      </ContextMenuItem>
+                    </ContextMenuContent>
+                  </ContextMenu>
+                )}
+              </div>
+
+              {/* BODY ZONE */}
+              <div className="mb-4">
+                <div className="text-xs text-muted-foreground mb-2 font-medium uppercase tracking-wide">
+                  Body Zone (Multi Instance)
+                </div>
+                {bodyBlocks.length === 0 ? (
+                  <div
+                    className={cn(
+                      "border-2 border-dashed rounded-lg py-20 px-12 text-center transition-all min-h-[400px] flex flex-col items-center justify-center",
+                      bodyDragOverIndex === 0
+                        ? "border-primary bg-primary/10"
+                        : "border-gray-300 hover:border-primary/50 hover:bg-primary/5"
+                    )}
+                    onDrop={(e) => handleBodyDrop(e, 0)}
+                    onDragEnter={() => setBodyDragOverIndex(0)}
+                    onDragLeave={() => setBodyDragOverIndex(null)}
                     onDragOver={handleDragOver}
                   >
-                    {dragOverIndex === 0 && (
-                      <span className="text-xs text-primary font-medium">Drop here</span>
-                    )}
+                    <LayoutGrid className="w-16 h-16 text-gray-300 mb-4" />
+                    <p className="text-gray-600 font-medium mb-2 text-lg">Start Building Your Profile</p>
+                    <p className="text-sm text-gray-500">
+                      Drag components from the left sidebar to begin
+                    </p>
                   </div>
+                ) : (
+                  <div className="space-y-2">
+                    <div
+                      className={cn(
+                        "h-12 border-2 border-dashed rounded transition-all flex items-center justify-center",
+                        bodyDragOverIndex === 0
+                          ? "border-primary bg-primary/10"
+                          : "border-transparent hover:border-primary/30"
+                      )}
+                      onDrop={(e) => handleBodyDrop(e, 0)}
+                      onDragEnter={() => setBodyDragOverIndex(0)}
+                      onDragLeave={() => setBodyDragOverIndex(null)}
+                      onDragOver={handleDragOver}
+                    >
+                      {bodyDragOverIndex === 0 && (
+                        <span className="text-xs text-primary font-medium">Drop here</span>
+                      )}
+                    </div>
 
-                  {/* Existing blocks */}
-                  {blocks.map((block, index) => (
-                    <div key={block.id}>
-                      <ContextMenu>
-                        <ContextMenuTrigger>
-                          <div
-                            className={cn(
-                              "relative border-2 rounded-lg p-6 transition-all cursor-pointer group",
-                              selectedBlockId === block.id
-                                ? "border-primary bg-primary/5 ring-2 ring-primary/20"
-                                : "border-gray-300 hover:border-primary/50"
-                            )}
-                            onClick={() => {
-                              onSelectBlock?.(block.id);
-                            }}
-                            onMouseEnter={() => setHoveredBlockId(block.id)}
-                            onMouseLeave={() => setHoveredBlockId(null)}
-                          >
-                            {/* Hover toolbar */}
-                            {(hoveredBlockId === block.id || selectedBlockId === block.id) && (
-                              <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
-                                <Button
-                                  variant="secondary"
-                                  size="sm"
-                                  className="h-7 px-2 text-xs"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    onSelectBlock?.(block.id);
-                                  }}
-                                  title="Edit"
-                                >
-                                  <Edit3 className="w-3 h-3" />
-                                </Button>
-                                <Button
-                                  variant="secondary"
-                                  size="sm"
-                                  className="h-7 px-2 text-xs"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleDuplicate(block.id);
-                                  }}
-                                  title="Duplicate (Cmd+D)"
-                                >
-                                  <Copy className="w-3 h-3" />
-                                </Button>
-                                <Button
-                                  variant="secondary"
-                                  size="sm"
-                                  className="h-7 px-2 text-xs text-destructive hover:text-destructive"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleDelete(block.id);
-                                  }}
-                                  title="Delete (Del)"
-                                >
-                                  <Trash2 className="w-3 h-3" />
-                                </Button>
-                              </div>
-                            )}
-                            
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded bg-primary/10 flex items-center justify-center text-primary">
-                                {block.type.charAt(0).toUpperCase()}
-                              </div>
-                              <div className="flex-1">
-                                <div className="font-medium text-gray-800">{block.label}</div>
-                                <div className="text-xs text-gray-500 capitalize mb-2">{block.type.replace('-', ' ')}</div>
-                                <div className="text-sm text-gray-700 line-clamp-2">
-                                  {block.props?.content || 'Click to edit...'}
+                    {bodyBlocks.map((block, index) => (
+                      <div key={block.id}>
+                        <ContextMenu>
+                          <ContextMenuTrigger>
+                            <div
+                              className={cn(
+                                "relative border-2 rounded-lg p-6 transition-all cursor-pointer group",
+                                selectedBlockId === block.id
+                                  ? "border-primary bg-primary/5 ring-2 ring-primary/20"
+                                  : "border-gray-300 hover:border-primary/50"
+                              )}
+                              onClick={() => onSelectBlock?.(block.id)}
+                              onMouseEnter={() => setHoveredBlockId(block.id)}
+                              onMouseLeave={() => setHoveredBlockId(null)}
+                            >
+                              {(hoveredBlockId === block.id || selectedBlockId === block.id) && (
+                                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                                  <Button
+                                    variant="secondary"
+                                    size="sm"
+                                    className="h-7 px-2 text-xs"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      onSelectBlock?.(block.id);
+                                    }}
+                                    title="Edit"
+                                  >
+                                    <Edit3 className="w-3 h-3" />
+                                  </Button>
+                                  <Button
+                                    variant="secondary"
+                                    size="sm"
+                                    className="h-7 px-2 text-xs"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleDuplicate(block.id);
+                                    }}
+                                    title="Duplicate (Cmd+D)"
+                                  >
+                                    <Copy className="w-3 h-3" />
+                                  </Button>
+                                  <Button
+                                    variant="secondary"
+                                    size="sm"
+                                    className="h-7 px-2 text-xs text-destructive hover:text-destructive"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleDeleteBody(block.id);
+                                    }}
+                                    title="Delete (Del)"
+                                  >
+                                    <Trash2 className="w-3 h-3" />
+                                  </Button>
+                                </div>
+                              )}
+                              
+                              <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded bg-primary/10 flex items-center justify-center text-primary">
+                                  {block.type.charAt(0).toUpperCase()}
+                                </div>
+                                <div className="flex-1">
+                                  <div className="font-medium text-gray-800">{block.label}</div>
+                                  <div className="text-xs text-gray-500 capitalize mb-2">{block.type.replace('-', ' ')}</div>
+                                  <div className="text-sm text-gray-700 line-clamp-2">
+                                    {block.props?.content || 'Click to edit...'}
+                                  </div>
                                 </div>
                               </div>
                             </div>
-                          </div>
-                        </ContextMenuTrigger>
-                        <ContextMenuContent>
-                          <ContextMenuItem onClick={() => {
-                            onSelectBlock?.(block.id);
-                          }}>
-                            Edit
-                          </ContextMenuItem>
-                          <ContextMenuItem onClick={() => handleDuplicate(block.id)}>
-                            <Copy className="w-4 h-4 mr-2" />
-                            Duplicate
-                          </ContextMenuItem>
-                          <ContextMenuItem 
-                            onClick={() => handleMoveUp(block.id)}
-                            disabled={index === 0}
-                          >
-                            <ChevronUp className="w-4 h-4 mr-2" />
-                            Move Up
-                          </ContextMenuItem>
-                          <ContextMenuItem 
-                            onClick={() => handleMoveDown(block.id)}
-                            disabled={index === blocks.length - 1}
-                          >
-                            <ChevronDown className="w-4 h-4 mr-2" />
-                            Move Down
-                          </ContextMenuItem>
-                          <ContextMenuItem 
-                            onClick={() => handleDelete(block.id)}
-                            className="text-destructive"
-                          >
-                            <Trash2 className="w-4 h-4 mr-2" />
-                            Delete
-                          </ContextMenuItem>
-                        </ContextMenuContent>
-                      </ContextMenu>
+                          </ContextMenuTrigger>
+                          <ContextMenuContent>
+                            <ContextMenuItem onClick={() => onSelectBlock?.(block.id)}>
+                              Edit
+                            </ContextMenuItem>
+                            <ContextMenuItem onClick={() => handleDuplicate(block.id)}>
+                              <Copy className="w-4 h-4 mr-2" />
+                              Duplicate
+                            </ContextMenuItem>
+                            <ContextMenuItem 
+                              onClick={() => handleMoveUp(block.id)}
+                              disabled={index === 0}
+                            >
+                              <ChevronUp className="w-4 h-4 mr-2" />
+                              Move Up
+                            </ContextMenuItem>
+                            <ContextMenuItem 
+                              onClick={() => handleMoveDown(block.id)}
+                              disabled={index === bodyBlocks.length - 1}
+                            >
+                              <ChevronDown className="w-4 h-4 mr-2" />
+                              Move Down
+                            </ContextMenuItem>
+                            <ContextMenuItem 
+                              onClick={() => handleDeleteBody(block.id)}
+                              className="text-destructive"
+                            >
+                              <Trash2 className="w-4 h-4 mr-2" />
+                              Delete
+                            </ContextMenuItem>
+                          </ContextMenuContent>
+                        </ContextMenu>
 
-                      {/* Drop zone after each block */}
+                        <div
+                          className={cn(
+                            "h-12 border-2 border-dashed rounded transition-all flex items-center justify-center mt-2",
+                            bodyDragOverIndex === index + 1
+                              ? "border-primary bg-primary/10"
+                              : "border-transparent hover:border-primary/30"
+                          )}
+                          onDrop={(e) => handleBodyDrop(e, index + 1)}
+                          onDragEnter={() => setBodyDragOverIndex(index + 1)}
+                          onDragLeave={() => setBodyDragOverIndex(null)}
+                          onDragOver={handleDragOver}
+                        >
+                          {bodyDragOverIndex === index + 1 && (
+                            <span className="text-xs text-primary font-medium">Drop here</span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* FOOTER ZONE */}
+              <div id="canvas-footer-zone">
+                <div className="text-xs text-muted-foreground mb-2 font-medium uppercase tracking-wide">
+                  Footer Zone (Single Instance)
+                </div>
+                {!footerBlock ? (
+                  <div
+                    className={cn(
+                      "border-2 border-dashed rounded-lg py-12 px-8 text-center transition-all",
+                      footerDragOver
+                        ? "border-primary bg-primary/10"
+                        : "border-gray-300 hover:border-primary/50 hover:bg-primary/5"
+                    )}
+                    onDrop={handleFooterDrop}
+                    onDragEnter={() => setFooterDragOver(true)}
+                    onDragLeave={() => setFooterDragOver(false)}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      e.dataTransfer.dropEffect = 'copy';
+                    }}
+                  >
+                    <PanelBottom className="w-12 h-12 text-gray-300 mb-3 mx-auto" />
+                    <p className="text-gray-600 font-medium mb-1">Drop Footer Here</p>
+                    <p className="text-xs text-gray-500">
+                      Drag the Footer component from the left sidebar
+                    </p>
+                  </div>
+                ) : (
+                  <ContextMenu>
+                    <ContextMenuTrigger>
                       <div
                         className={cn(
-                          "h-12 border-2 border-dashed rounded transition-all flex items-center justify-center my-2",
-                          dragOverIndex === index + 1
-                            ? "border-primary bg-primary/10"
-                            : "border-transparent hover:border-primary/30"
+                          "relative border-2 rounded-lg p-6 transition-all cursor-pointer group",
+                          selectedBlockId === footerBlock.id
+                            ? "border-primary bg-primary/5 ring-2 ring-primary/20"
+                            : "border-gray-300 hover:border-primary/50"
                         )}
-                        onDrop={(e) => handleDrop(e, index + 1)}
-                        onDragEnter={() => setDragOverIndex(index + 1)}
-                        onDragLeave={() => setDragOverIndex(null)}
-                        onDragOver={handleDragOver}
+                        onClick={() => onSelectBlock?.(footerBlock.id)}
                       >
-                        {dragOverIndex === index + 1 && (
-                          <span className="text-xs text-primary font-medium">Drop here</span>
-                        )}
+                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            className="h-7 px-2 text-xs text-destructive hover:text-destructive"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteFooter();
+                            }}
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
+                        </div>
+                        
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded bg-primary/10 flex items-center justify-center text-primary">
+                            <PanelBottom className="w-5 h-5" />
+                          </div>
+                          <div className="flex-1">
+                            <div className="font-medium text-gray-800">{footerBlock.label}</div>
+                            <div className="text-xs text-gray-500">Footer Component</div>
+                            <div className="text-sm text-gray-700 mt-1">
+                              {footerBlock.props?.siteName || 'Footer'}
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+                    </ContextMenuTrigger>
+                    <ContextMenuContent>
+                      <ContextMenuItem onClick={() => onSelectBlock?.(footerBlock.id)}>
+                        Edit
+                      </ContextMenuItem>
+                      <ContextMenuItem onClick={handleDeleteFooter} className="text-destructive">
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Delete
+                      </ContextMenuItem>
+                    </ContextMenuContent>
+                  </ContextMenu>
+                )}
+              </div>
             </div>
           </div>
         </div>

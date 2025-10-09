@@ -5,28 +5,43 @@ import { useState } from "react";
 
 export default function ProfileBuilder() {
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
-  const [blocks, setBlocks] = useState<CanvasBlock[]>([]);
+  const [headerBlock, setHeaderBlock] = useState<CanvasBlock | null>(null);
+  const [bodyBlocks, setBodyBlocks] = useState<CanvasBlock[]>([]);
+  const [footerBlock, setFooterBlock] = useState<CanvasBlock | null>(null);
 
   const updateBlockProps = (blockId: string, props: any) => {
-    setBlocks(prev => {
-      const updated = prev.map(block => 
-        block.id === blockId ? { ...block, props: { ...block.props, ...props } } : block
-      );
-      console.log('Updating block props', { blockId, props, updated });
-      return updated;
-    });
+    if (headerBlock?.id === blockId) {
+      setHeaderBlock({ ...headerBlock, props: { ...headerBlock.props, ...props } });
+      return;
+    }
+    
+    if (footerBlock?.id === blockId) {
+      setFooterBlock({ ...footerBlock, props: { ...footerBlock.props, ...props } });
+      return;
+    }
+    
+    setBodyBlocks(prev => prev.map(block => 
+      block.id === blockId ? { ...block, props: { ...block.props, ...props } } : block
+    ));
   };
 
-  const selectedBlock = blocks.find(b => b.id === selectedBlockId) || null;
+  const selectedBlock = 
+    headerBlock?.id === selectedBlockId ? headerBlock :
+    footerBlock?.id === selectedBlockId ? footerBlock :
+    bodyBlocks.find(b => b.id === selectedBlockId) || null;
 
   return (
     <div className="flex h-screen w-full bg-background">
       <ComponentLibrary />
       <Canvas 
-        blocks={blocks}
+        headerBlock={headerBlock}
+        bodyBlocks={bodyBlocks}
+        footerBlock={footerBlock}
         selectedBlockId={selectedBlockId}
-        onSelectBlock={setSelectedBlockId} 
-        onBlocksChange={setBlocks}
+        onSelectBlock={setSelectedBlockId}
+        onHeaderChange={setHeaderBlock}
+        onBodyBlocksChange={setBodyBlocks}
+        onFooterChange={setFooterBlock}
       />
       <PropertiesPanel 
         selectedBlock={selectedBlock}
