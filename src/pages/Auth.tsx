@@ -13,7 +13,8 @@ export default function Auth() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
+  const [displayName, setDisplayName] = useState("");
+  const [handle, setHandle] = useState("");
   const [rememberMe, setRememberMe] = useState(true);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -47,7 +48,10 @@ export default function Auth() {
           password,
           options: {
             emailRedirectTo: `${window.location.origin}/dashboard`,
-            data: { name },
+            data: {
+              display_name: displayName,
+              handle: handle || email.split('@')[0],
+            },
           },
         });
 
@@ -162,18 +166,34 @@ export default function Auth() {
 
           <form onSubmit={handleAuth} className="space-y-4">
             {isSignUp && (
-              <div className="space-y-2">
-                <Label htmlFor="name">Full Name</Label>
-                <Input
-                  id="name"
-                  type="text"
-                  placeholder="John Doe"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  required
-                  className="bg-background/50"
-                />
-              </div>
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="displayName">Display Name</Label>
+                  <Input
+                    id="displayName"
+                    type="text"
+                    placeholder="John Doe"
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                    required
+                    className="bg-background/50"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="handle">Username</Label>
+                  <Input
+                    id="handle"
+                    type="text"
+                    placeholder="johndoe"
+                    value={handle}
+                    onChange={(e) => setHandle(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
+                    className="bg-background/50"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Leave blank to use part of your email
+                  </p>
+                </div>
+              </>
             )}
 
             <div className="space-y-2">
