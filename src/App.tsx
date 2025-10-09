@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ContentProvider } from "./contexts/ContentContext";
 import { AuthProvider } from "./contexts/AuthContext";
+import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import Landing from "./pages/Landing";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
@@ -39,29 +40,29 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
-            <Routes>
+          <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/auth" element={<Auth />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/profile-builder" element={<ProfileBuilder />} />
-            <Route path="/media" element={<Media />} />
+            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+            <Route path="/profile-builder" element={<ProtectedRoute><ProfileBuilder /></ProtectedRoute>} />
+            <Route path="/media" element={<ProtectedRoute><Media /></ProtectedRoute>} />
             <Route path="/preview" element={<Preview />} />
-            <Route path="/posts" element={<Posts />} />
-            <Route path="/stories" element={<Stories />} />
-            <Route path="/reels" element={<Reels />} />
+            <Route path="/posts" element={<ProtectedRoute><Posts /></ProtectedRoute>} />
+            <Route path="/stories" element={<ProtectedRoute><Stories /></ProtectedRoute>} />
+            <Route path="/reels" element={<ProtectedRoute><Reels /></ProtectedRoute>} />
             <Route path="/products" element={<Products />} />
-            <Route path="/orders" element={<Orders />} />
-            <Route path="/discounts" element={<Discounts />} />
-            <Route path="/payments" element={<Payments />} />
-            <Route path="/following" element={<Following />} />
-            <Route path="/followers" element={<Followers />} />
-            <Route path="/messages" element={<Messages />} />
-            <Route path="/notifications" element={<Notifications />} />
-            <Route path="/analytics" element={<Analytics />} />
-            <Route path="/sales" element={<Sales />} />
-            <Route path="/growth" element={<Growth />} />
+            <Route path="/orders" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
+            <Route path="/discounts" element={<ProtectedRoute><Discounts /></ProtectedRoute>} />
+            <Route path="/payments" element={<ProtectedRoute><Payments /></ProtectedRoute>} />
+            <Route path="/following" element={<ProtectedRoute><Following /></ProtectedRoute>} />
+            <Route path="/followers" element={<ProtectedRoute><Followers /></ProtectedRoute>} />
+            <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
+            <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
+            <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
+            <Route path="/sales" element={<ProtectedRoute><Sales /></ProtectedRoute>} />
+            <Route path="/growth" element={<ProtectedRoute><Growth /></ProtectedRoute>} />
             <Route path="/discover" element={<Discover />} />
-            <Route path="/settings" element={<Settings />} />
+            <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
             </Routes>

@@ -3,11 +3,22 @@ import {
   LayoutDashboard, Edit3, FileText, MessageSquare, Image as ImageIcon, 
   Video, Archive, ShoppingBag, ShoppingCart, Tag, CreditCard, 
   Users, UserPlus, Mail, Bell, BarChart3, TrendingUp, Activity,
-  ChevronLeft, Search
+  ChevronLeft, Search, LogOut, Settings as SettingsIcon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useNavigate } from "react-router-dom";
 
 const navigationSections = [
   {
@@ -57,6 +68,18 @@ const navigationSections = [
 
 export const Sidebar = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, profile, signOut } = useAuth();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/auth');
+  };
+
+  const getInitials = (name?: string | null) => {
+    if (!name) return user?.email?.[0]?.toUpperCase() || 'U';
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  };
 
   return (
     <aside className="w-64 min-h-screen bg-background/95 backdrop-blur-xl border-r border-white/10 flex flex-col">
@@ -119,15 +142,39 @@ export const Sidebar = () => {
 
       {/* User Profile */}
       <div className="p-4 border-t border-white/10">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-semibold">
-            C
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium truncate">ceo</p>
-            <p className="text-xs text-muted-foreground">Plan</p>
-          </div>
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="w-full justify-start gap-3 h-auto p-2">
+              <Avatar className="h-10 w-10">
+                <AvatarImage src={profile?.avatar_url || undefined} />
+                <AvatarFallback className="bg-gradient-to-br from-primary to-secondary text-white">
+                  {getInitials(profile?.display_name)}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 min-w-0 text-left">
+                <p className="text-sm font-medium truncate">
+                  {profile?.display_name || profile?.handle || user?.email}
+                </p>
+                <p className="text-xs text-muted-foreground truncate">
+                  @{profile?.handle || 'user'}
+                </p>
+              </div>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuLabel>My Account</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => navigate('/settings')}>
+              <SettingsIcon className="w-4 h-4 mr-2" />
+              Settings
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleSignOut}>
+              <LogOut className="w-4 h-4 mr-2" />
+              Sign Out
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </aside>
   );

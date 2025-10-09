@@ -613,6 +613,50 @@ export type Database = {
           },
         ]
       }
+      profile_pages: {
+        Row: {
+          body_blocks: Json[] | null
+          created_at: string
+          footer_block: Json | null
+          header_block: Json | null
+          id: string
+          published: boolean | null
+          slug: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          body_blocks?: Json[] | null
+          created_at?: string
+          footer_block?: Json | null
+          header_block?: Json | null
+          id?: string
+          published?: boolean | null
+          slug: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          body_blocks?: Json[] | null
+          created_at?: string
+          footer_block?: Json | null
+          header_block?: Json | null
+          id?: string
+          published?: boolean | null
+          slug?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profile_pages_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
