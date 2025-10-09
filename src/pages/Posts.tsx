@@ -1,26 +1,30 @@
 import { useState } from 'react';
 import { Sidebar } from '@/components/layout/Sidebar';
-import { useContent, Post } from '@/contexts/ContentContext';
+import { usePosts, usePostLikes } from '@/hooks/usePosts';
+import { useFileUpload } from '@/hooks/useFileUpload';
+import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Heart, MessageCircle, Share2, Bookmark, MoreHorizontal, Search, Plus, TrendingUp, Users, Calendar, MapPin, CheckCircle2 } from 'lucide-react';
+import { Heart, MessageCircle, Share2, Bookmark, MoreHorizontal, Search, Plus, TrendingUp, Users, Calendar, MapPin, CheckCircle2, Loader2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const Posts = () => {
-  const { posts } = useContent();
+  const { posts, isLoading, createPost, likePost } = usePosts();
+  const { profile } = useAuth();
   const [filter, setFilter] = useState<'all' | 'following' | 'trending'>('all');
   const [sort, setSort] = useState<'newest' | 'top' | 'commented'>('newest');
   const [displayedPosts, setDisplayedPosts] = useState(6);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 
   const sortedPosts = [...posts].sort((a, b) => {
-    if (sort === 'newest') return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-    if (sort === 'top') return b.likes - a.likes;
-    return b.comments - a.comments;
+    if (sort === 'newest') return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    if (sort === 'top') return b.likes_count - a.likes_count;
+    return b.comments_count - a.comments_count;
   });
 
   const visiblePosts = sortedPosts.slice(0, displayedPosts);
@@ -52,24 +56,14 @@ const Posts = () => {
               <p className="text-muted-foreground">Share your moments with the world</p>
             </div>
             
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button className="gap-2">
-                  <Plus className="w-4 h-4" />
-                  Create Post
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Create New Post</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4 py-4">
-                  <Textarea placeholder="What's on your mind?" rows={4} />
-                  <Input type="file" accept="image/*,video/*" />
-                  <Button className="w-full">Publish Post</Button>
-                </div>
-              </DialogContent>
-            </Dialog>
+            <CreatePostDialog 
+              isOpen={isCreateDialogOpen}
+              onOpenChange={setIsCreateDialogOpen}
+              onCreatePost={(data) => {
+                createPost.mutate(data);
+                setIsCreateDialogOpen(false);
+              }}
+            />
           </div>
 
           {/* Search & Filters */}
@@ -99,7 +93,11 @@ const Posts = () => {
           <div className="flex gap-6">
             {/* Main Feed */}
             <div className="flex-1 space-y-6">
-              {visiblePosts.length === 0 ? (
+              {isLoading ? (
+                <div className="flex justify-center p-12">
+                  <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                </div>
+              ) : visiblePosts.length === 0 ? (
                 <Card className="p-12 text-center">
                   <div className="max-w-md mx-auto">
                     <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
@@ -109,27 +107,19 @@ const Posts = () => {
                     <p className="text-muted-foreground mb-6">
                       Be the first to share something amazing with the community!
                     </p>
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button>Create Your First Post</Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>Create New Post</DialogTitle>
-                        </DialogHeader>
-                        <div className="space-y-4 py-4">
-                          <Textarea placeholder="What's on your mind?" rows={4} />
-                          <Input type="file" accept="image/*,video/*" />
-                          <Button className="w-full">Publish Post</Button>
-                        </div>
-                      </DialogContent>
-                    </Dialog>
+                    <Button onClick={() => setIsCreateDialogOpen(true)}>Create Your First Post</Button>
                   </div>
                 </Card>
               ) : (
                 <>
                   {visiblePosts.map((post) => (
-                    <PostCard key={post.id} post={post} formatTime={formatTime} formatNumber={formatNumber} />
+                    <PostCard 
+                      key={post.id} 
+                      post={post} 
+                      formatTime={formatTime} 
+                      formatNumber={formatNumber}
+                      onLike={() => likePost.mutate(post.id)}
+                    />
                   ))}
                   
                   {displayedPosts < sortedPosts.length && (
@@ -207,93 +197,208 @@ const Posts = () => {
   );
 };
 
-const PostCard = ({ post, formatTime, formatNumber }: { post: Post; formatTime: (d: string) => string; formatNumber: (n: number) => string }) => (
-  <Card className="overflow-hidden">
-    {/* Header */}
-    <div className="p-4 flex items-center justify-between">
-      <div className="flex items-center gap-3">
-        <Avatar>
-          <AvatarImage src={post.author.avatar} />
-          <AvatarFallback>{post.author.name[0]}</AvatarFallback>
-        </Avatar>
-        <div>
-          <div className="flex items-center gap-1">
-            <p className="font-semibold">{post.author.name}</p>
-            {post.author.verified && <CheckCircle2 className="w-4 h-4 text-primary" />}
-          </div>
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <span>{post.author.handle}</span>
-            <span>•</span>
-            <span>{formatTime(post.createdAt)}</span>
-            {post.location && (
+const CreatePostDialog = ({ 
+  isOpen, 
+  onOpenChange,
+  onCreatePost 
+}: { 
+  isOpen: boolean; 
+  onOpenChange: (open: boolean) => void;
+  onCreatePost: (data: { caption: string; media: string[]; location?: string; tags?: string[] }) => void;
+}) => {
+  const [caption, setCaption] = useState('');
+  const [location, setLocation] = useState('');
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const { uploadMultiple, uploading } = useFileUpload('post-media');
+
+  const handleSubmit = async () => {
+    if (!caption.trim() && selectedFiles.length === 0) return;
+
+    let mediaUrls: string[] = [];
+    if (selectedFiles.length > 0) {
+      mediaUrls = await uploadMultiple(selectedFiles);
+    }
+
+    // Extract tags from caption
+    const tags = caption.match(/#\w+/g)?.map(tag => tag.slice(1)) || [];
+
+    onCreatePost({
+      caption,
+      media: mediaUrls,
+      location: location || undefined,
+      tags,
+    });
+
+    setCaption('');
+    setLocation('');
+    setSelectedFiles([]);
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogTrigger asChild>
+        <Button className="gap-2">
+          <Plus className="w-4 h-4" />
+          Create Post
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Create New Post</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 py-4">
+          <Textarea 
+            placeholder="What's on your mind? Use #hashtags to categorize your post..."
+            rows={4}
+            value={caption}
+            onChange={(e) => setCaption(e.target.value)}
+          />
+          <Input 
+            placeholder="Add location (optional)"
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
+          />
+          <Input 
+            type="file" 
+            accept="image/*,video/*"
+            multiple
+            onChange={(e) => setSelectedFiles(Array.from(e.target.files || []))}
+          />
+          {selectedFiles.length > 0 && (
+            <p className="text-sm text-muted-foreground">
+              {selectedFiles.length} file(s) selected
+            </p>
+          )}
+          <Button 
+            className="w-full" 
+            onClick={handleSubmit}
+            disabled={uploading || (!caption.trim() && selectedFiles.length === 0)}
+          >
+            {uploading ? (
               <>
-                <span>•</span>
-                <span className="flex items-center gap-1">
-                  <MapPin className="w-3 h-3" />
-                  {post.location}
-                </span>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Uploading...
               </>
+            ) : (
+              'Publish Post'
             )}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+const PostCard = ({ 
+  post, 
+  formatTime, 
+  formatNumber,
+  onLike 
+}: { 
+  post: any; 
+  formatTime: (d: string) => string; 
+  formatNumber: (n: number) => string;
+  onLike: () => void;
+}) => {
+  const { isLiked, isLoading: likeLoading } = usePostLikes(post.id);
+
+  return (
+    <Card className="overflow-hidden">
+      {/* Header */}
+      <div className="p-4 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Avatar>
+            <AvatarImage src={post.profiles?.avatar_url || undefined} />
+            <AvatarFallback>
+              {post.profiles?.display_name?.[0] || post.profiles?.handle?.[0] || 'U'}
+            </AvatarFallback>
+          </Avatar>
+          <div>
+            <div className="flex items-center gap-1">
+              <p className="font-semibold">{post.profiles?.display_name || post.profiles?.handle}</p>
+            </div>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <span>@{post.profiles?.handle}</span>
+              <span>•</span>
+              <span>{formatTime(post.created_at)}</span>
+              {post.location && (
+                <>
+                  <span>•</span>
+                  <span className="flex items-center gap-1">
+                    <MapPin className="w-3 h-3" />
+                    {post.location}
+                  </span>
+                </>
+              )}
+            </div>
           </div>
         </div>
+        <Button variant="ghost" size="icon">
+          <MoreHorizontal className="w-4 h-4" />
+        </Button>
       </div>
-      <Button variant="ghost" size="icon">
-        <MoreHorizontal className="w-4 h-4" />
-      </Button>
-    </div>
 
-    {/* Caption */}
-    <div className="px-4 pb-3">
-      <p className="text-sm">{post.caption}</p>
-      {post.tags && (
-        <div className="flex flex-wrap gap-2 mt-2">
-          {post.tags.map((tag) => (
-            <Badge key={tag} variant="secondary" className="text-xs">
-              #{tag}
-            </Badge>
-          ))}
+      {/* Caption */}
+      {post.caption && (
+        <div className="px-4 pb-3">
+          <p className="text-sm">{post.caption}</p>
+          {post.tags && post.tags.length > 0 && (
+            <div className="flex flex-wrap gap-2 mt-2">
+              {post.tags.map((tag: string) => (
+                <Badge key={tag} variant="secondary" className="text-xs">
+                  #{tag}
+                </Badge>
+              ))}
+            </div>
+          )}
         </div>
       )}
-    </div>
 
-    {/* Media */}
-    {post.media && post.media.length > 0 && (
-      <div className="bg-muted">
-        <img 
-          src={post.media[0].url} 
-          alt="Post content" 
-          className="w-full object-cover"
-          style={{ aspectRatio: post.media[0].aspect || '1:1' }}
-        />
-      </div>
-    )}
+      {/* Media */}
+      {post.media && post.media.length > 0 && (
+        <div className="bg-muted">
+          <img 
+            src={post.media[0]} 
+            alt="Post content" 
+            className="w-full object-cover max-h-[600px]"
+          />
+        </div>
+      )}
 
-    {/* Actions */}
-    <div className="p-4">
-      <div className="flex items-center gap-6 mb-3">
-        <button className="flex items-center gap-2 text-sm hover:text-primary transition-colors">
-          <Heart className="w-5 h-5" />
-          <span>{formatNumber(post.likes)}</span>
-        </button>
-        <button className="flex items-center gap-2 text-sm hover:text-primary transition-colors">
-          <MessageCircle className="w-5 h-5" />
-          <span>{formatNumber(post.comments)}</span>
-        </button>
-        <button className="flex items-center gap-2 text-sm hover:text-primary transition-colors">
-          <Share2 className="w-5 h-5" />
-          <span>{formatNumber(post.shares)}</span>
-        </button>
-        <button className="ml-auto hover:text-primary transition-colors">
-          <Bookmark className="w-5 h-5" />
-        </button>
-      </div>
+      {/* Actions */}
+      <div className="p-4">
+        <div className="flex items-center gap-6 mb-3">
+          <button 
+            className={`flex items-center gap-2 text-sm transition-colors ${
+              isLiked ? 'text-red-500' : 'hover:text-primary'
+            }`}
+            onClick={onLike}
+            disabled={likeLoading}
+          >
+            <Heart className={`w-5 h-5 ${isLiked ? 'fill-current' : ''}`} />
+            <span>{formatNumber(post.likes_count)}</span>
+          </button>
+          <button className="flex items-center gap-2 text-sm hover:text-primary transition-colors">
+            <MessageCircle className="w-5 h-5" />
+            <span>{formatNumber(post.comments_count)}</span>
+          </button>
+          <button className="flex items-center gap-2 text-sm hover:text-primary transition-colors">
+            <Share2 className="w-5 h-5" />
+            <span>{formatNumber(post.shares_count)}</span>
+          </button>
+          <button className="ml-auto hover:text-primary transition-colors">
+            <Bookmark className="w-5 h-5" />
+          </button>
+        </div>
 
-      {/* Comment Preview */}
-      <div className="text-xs text-muted-foreground">
-        View all {formatNumber(post.comments)} comments
+        {post.comments_count > 0 && (
+          <div className="text-xs text-muted-foreground">
+            View all {formatNumber(post.comments_count)} comments
+          </div>
+        )}
       </div>
-    </div>
-  </Card>
-);
+    </Card>
+  );
+};
 
 export default Posts;
