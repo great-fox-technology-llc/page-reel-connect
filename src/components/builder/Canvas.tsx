@@ -348,12 +348,14 @@ export const Canvas = ({
     // Save to database first
     await handleSave();
     
-    // Open preview with slug or fallback to localStorage
-    if (currentSlug) {
-      window.open(`/preview/${currentSlug}`, '_blank');
-    } else {
-      toast.error('Please save your page first to preview');
-    }
+    // Give state a moment to update after save
+    setTimeout(() => {
+      if (currentSlug) {
+        window.open(`/preview/${currentSlug}`, '_blank');
+      } else {
+        toast.error('Please save your page first to get a preview URL');
+      }
+    }, 300);
   };
 
   const handleDeleteHeader = () => {

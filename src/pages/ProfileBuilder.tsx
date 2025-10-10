@@ -71,6 +71,10 @@ export default function ProfileBuilder() {
           body_blocks: draft.body,
           footer_block: draft.footer,
         });
+        // Ensure slug persists
+        if (!currentSlug && profilePages?.[0]?.slug) {
+          setCurrentSlug(profilePages[0].slug);
+        }
       } else {
         // Create new page
         const slug = generateSlug(`${user.email}-profile`);
@@ -81,8 +85,10 @@ export default function ProfileBuilder() {
           body_blocks: draft.body,
           footer_block: draft.footer,
         });
+        // Update both ID and slug immediately
         setCurrentPageId(newPage.id);
         setCurrentSlug(newPage.slug);
+        console.log('Profile page created with slug:', newPage.slug);
       }
     } catch (error) {
       console.error('Failed to save to database:', error);
