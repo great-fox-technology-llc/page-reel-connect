@@ -61,6 +61,7 @@ export const Canvas = ({
   const [bodyDragOverIndex, setBodyDragOverIndex] = useState<number | null>(null);
   const [footerDragOver, setFooterDragOver] = useState(false);
   const [hoveredBlockId, setHoveredBlockId] = useState<string | null>(null);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const canvasRef = useRef<HTMLDivElement>(null);
   
   // Safety check for undefined props during hot reload
@@ -80,6 +81,7 @@ export const Canvas = ({
       }
     };
     localStorage.setItem('canvas-draft', JSON.stringify(draft));
+    setHasUnsavedChanges(true);
     console.info('Draft auto-saved', { id: draft.id, zones: { header: !!headerBlock, body: safeBodyBlocks.length, footer: !!footerBlock } });
   }, [headerBlock, safeBodyBlocks, footerBlock]);
 
@@ -296,7 +298,7 @@ export const Canvas = ({
   };
 
   const handleBack = () => {
-    if (headerBlock || safeBodyBlocks.length > 0 || footerBlock) {
+    if (hasUnsavedChanges) {
       if (confirm('You have unsaved changes. Are you sure you want to leave?')) {
         navigate('/dashboard');
       }
@@ -316,6 +318,7 @@ export const Canvas = ({
     if (onSaveToDatabase) {
       try {
         await onSaveToDatabase(draft);
+        setHasUnsavedChanges(false);
         toast.success('Changes saved to database');
       } catch (error) {
         toast.error('Failed to save to database');

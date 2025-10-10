@@ -49,6 +49,23 @@ export function useProfilePageBySlug(slug?: string) {
   });
 }
 
+export function useProfilePageBySlugForPreview(slug?: string) {
+  return useQuery({
+    queryKey: ['profilePagePreview', slug],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('profile_pages')
+        .select('*, profiles(*)')
+        .eq('slug', slug!)
+        .maybeSingle();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!slug,
+  });
+}
+
 export function useCreateProfilePage() {
   const queryClient = useQueryClient();
   const { toast } = useToast();

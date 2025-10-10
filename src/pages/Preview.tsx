@@ -1,8 +1,10 @@
 import { useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
-import { useProfilePageBySlug, useTrackPageView } from "@/hooks/useProfilePages";
+import { useProfilePageBySlugForPreview, useTrackPageView } from "@/hooks/useProfilePages";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Eye } from "lucide-react";
 import { 
   Type, 
   AlignLeft, 
@@ -75,19 +77,19 @@ export default function Preview() {
   const [bodyBlocks, setBodyBlocks] = useState<CanvasBlock[]>([]);
   const [footerBlock, setFooterBlock] = useState<CanvasBlock | null>(null);
   
-  const { data: profilePage, isLoading } = useProfilePageBySlug(slug);
+  const { data: profilePage, isLoading } = useProfilePageBySlugForPreview(slug);
   const trackPageView = useTrackPageView();
 
-  // Track page view
+  // Track page view only for published pages
   useEffect(() => {
-    if (profilePage && slug) {
+    if (profilePage && slug && profilePage.published) {
       trackPageView.mutate({
         pageId: profilePage.id,
         userId: profilePage.user_id,
         pageType: 'profile_page',
       });
     }
-  }, [profilePage?.id, slug]);
+  }, [profilePage?.id, profilePage?.published, slug]);
 
   // Load profile page from database or localStorage fallback
   useEffect(() => {
@@ -129,6 +131,16 @@ export default function Preview() {
 
   return (
     <div className="min-h-screen bg-white">
+      {/* Draft mode banner */}
+      {hasContent && profilePage && !profilePage.published && (
+        <Alert className="rounded-none border-0 border-b bg-blue-50 text-blue-900">
+          <Eye className="h-4 w-4" />
+          <AlertDescription>
+            You are viewing a draft preview. This page is not published yet.
+          </AlertDescription>
+        </Alert>
+      )}
+      
       {!hasContent ? (
         <div className="flex flex-col items-center justify-center min-h-screen px-4">
           <div className="text-gray-300 mb-6">
