@@ -32,6 +32,8 @@ import Growth from "./pages/Growth";
 import Discover from "./pages/Discover";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
+import { AdminGuard } from "./components/admin/AdminGuard";
+import SystemOverview from "./pages/admin/SystemOverview";
 
 const queryClient = new QueryClient();
 
@@ -70,6 +72,7 @@ const App = () => (
             <Route path="/growth" element={<ProtectedRoute><Growth /></ProtectedRoute>} />
             <Route path="/discover" element={<Discover />} />
             <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+            <Route path="/admin" element={<AdminGuard><SystemOverview /></AdminGuard>} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
             </Routes>
