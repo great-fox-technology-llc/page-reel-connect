@@ -13,7 +13,7 @@ interface HeaderElementProps extends HeaderProps {
 export const HeaderElement = ({
   layout,
   logo,
-  nav,
+  nav = [],
   showProfile,
   avatar,
   displayName,
