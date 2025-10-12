@@ -25,7 +25,7 @@ const navigationSections = [
     title: "CORE BUILDER",
     items: [
       { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
-      { icon: Edit3, label: "Profile Builder", path: "/profile-builder" },
+      { icon: Edit3, label: "Profile Builder", path: "/profile-builder/new" },
       { icon: FileText, label: "Pages", path: "/pages" },
     ]
   },

@@ -10,6 +10,9 @@ import Landing from "./pages/Landing";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import ProfileBuilder from "./pages/ProfileBuilder";
+import ProfileBuilderChooser from "./pages/ProfileBuilderChooser";
+import Pages from "./pages/Pages";
+import TemplateGallery from "./pages/TemplateGallery";
 import Media from "./pages/Media";
 import Preview from "./pages/Preview";
 import Posts from "./pages/Posts";
@@ -44,7 +47,10 @@ const App = () => (
             <Route path="/" element={<Landing />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+            <Route path="/pages" element={<ProtectedRoute><Pages /></ProtectedRoute>} />
+            <Route path="/profile-builder/new" element={<ProtectedRoute><ProfileBuilderChooser /></ProtectedRoute>} />
             <Route path="/profile-builder" element={<ProtectedRoute><ProfileBuilder /></ProtectedRoute>} />
+            <Route path="/templates" element={<ProtectedRoute><TemplateGallery /></ProtectedRoute>} />
             <Route path="/media" element={<ProtectedRoute><Media /></ProtectedRoute>} />
             <Route path="/preview" element={<Preview />} />
             <Route path="/preview/:slug" element={<Preview />} />

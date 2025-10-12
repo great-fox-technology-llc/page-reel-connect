@@ -6,9 +6,12 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useProfilePages, useCreateProfilePage, useUpdateProfilePage } from "@/hooks/useProfilePages";
 import { toast } from "sonner";
 import { generateSlug } from "@/lib/format";
+import { useSearchParams } from "react-router-dom";
+import { getSelectedTemplate, clearSelectedTemplate } from "@/lib/templateStorage";
 
 export default function ProfileBuilder() {
   const { user } = useAuth();
+  const [searchParams] = useSearchParams();
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
   const [headerBlock, setHeaderBlock] = useState<CanvasBlock | null>(null);
   const [bodyBlocks, setBodyBlocks] = useState<CanvasBlock[]>([]);
@@ -19,6 +22,29 @@ export default function ProfileBuilder() {
   const { data: profilePages } = useProfilePages(user?.id);
   const createProfilePage = useCreateProfilePage();
   const updateProfilePage = useUpdateProfilePage();
+
+  // Load template if specified in URL
+  useEffect(() => {
+    const templateId = searchParams.get('template');
+    const mode = searchParams.get('mode');
+    
+    if (templateId) {
+      const template = getSelectedTemplate();
+      if (template) {
+        console.log('[ProfileBuilder] Loading template:', template.name);
+        setHeaderBlock(template.structure.header);
+        setBodyBlocks(template.structure.body);
+        setFooterBlock(template.structure.footer);
+        clearSelectedTemplate();
+        toast.success(`Template "${template.name}" loaded`);
+      }
+    } else if (mode === 'scratch') {
+      console.log('[ProfileBuilder] Starting from scratch');
+      setHeaderBlock(null);
+      setBodyBlocks([]);
+      setFooterBlock(null);
+    }
+  }, [searchParams]);
 
   // Load existing profile page on mount
   useEffect(() => {
