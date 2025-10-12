@@ -13,9 +13,9 @@ export default function ProfileBuilder() {
   const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
-  const [headerBlock, setHeaderBlock] = useState<CanvasBlock | null>(null);
+  const [headerBlock, setHeaderBlock] = useState<CanvasBlock<import('@/types/layout').HeaderProps> | null>(null);
   const [bodyBlocks, setBodyBlocks] = useState<CanvasBlock[]>([]);
-  const [footerBlock, setFooterBlock] = useState<CanvasBlock | null>(null);
+  const [footerBlock, setFooterBlock] = useState<CanvasBlock<import('@/types/layout').FooterProps> | null>(null);
   const [currentPageId, setCurrentPageId] = useState<string | null>(null);
   const [currentSlug, setCurrentSlug] = useState<string | null>(null);
 
@@ -32,9 +32,9 @@ export default function ProfileBuilder() {
       const template = getSelectedTemplate();
       if (template) {
         console.log('[ProfileBuilder] Loading template:', template.name);
-        setHeaderBlock(template.structure.header);
+        setHeaderBlock(template.structure.header as CanvasBlock<import('@/types/layout').HeaderProps> | null);
         setBodyBlocks(template.structure.body);
-        setFooterBlock(template.structure.footer);
+        setFooterBlock(template.structure.footer as CanvasBlock<import('@/types/layout').FooterProps> | null);
         clearSelectedTemplate();
         toast.success(`Template "${template.name}" loaded`);
       }
@@ -55,13 +55,13 @@ export default function ProfileBuilder() {
       
       // Load blocks from database
       if (latestPage.header_block) {
-        setHeaderBlock(latestPage.header_block as CanvasBlock);
+        setHeaderBlock(latestPage.header_block as CanvasBlock<import('@/types/layout').HeaderProps>);
       }
       if (latestPage.body_blocks && Array.isArray(latestPage.body_blocks)) {
         setBodyBlocks(latestPage.body_blocks as CanvasBlock[]);
       }
       if (latestPage.footer_block) {
-        setFooterBlock(latestPage.footer_block as CanvasBlock);
+        setFooterBlock(latestPage.footer_block as CanvasBlock<import('@/types/layout').FooterProps>);
       }
     }
   }, [profilePages]);

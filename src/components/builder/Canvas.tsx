@@ -15,31 +15,25 @@ import { FooterElement } from "@/components/builderElements/Footer";
 
 type DeviceType = "desktop" | "tablet" | "mobile";
 
-interface CanvasBlock {
+interface CanvasBlock<TProps = Record<string, any>> {
   id: string;
   type: string;
   label: string;
   zone?: 'header' | 'body' | 'footer';
-  props: {
-    content?: string;
-    link?: string;
-    src?: string;
-    alt?: string;
-    [key: string]: any;
-  };
+  props: TProps;
 }
 
 interface CanvasProps {
-  headerBlock: CanvasBlock | null;
+  headerBlock: CanvasBlock<import('@/types/layout').HeaderProps> | null;
   bodyBlocks: CanvasBlock[];
-  footerBlock: CanvasBlock | null;
+  footerBlock: CanvasBlock<import('@/types/layout').FooterProps> | null;
   selectedBlockId: string | null;
   onSelectBlock?: (blockId: string | null) => void;
-  onHeaderChange?: (block: CanvasBlock | null) => void;
+  onHeaderChange?: (block: CanvasBlock<import('@/types/layout').HeaderProps> | null) => void;
   onBodyBlocksChange?: (blocks: CanvasBlock[]) => void;
-  onFooterChange?: (block: CanvasBlock | null) => void;
+  onFooterChange?: (block: CanvasBlock<import('@/types/layout').FooterProps> | null) => void;
   currentSlug?: string | null;
-  onSaveToDatabase?: (draft: { header: CanvasBlock | null; body: CanvasBlock[]; footer: CanvasBlock | null }) => Promise<void>;
+  onSaveToDatabase?: (draft: { header: CanvasBlock<import('@/types/layout').HeaderProps> | null; body: CanvasBlock[]; footer: CanvasBlock<import('@/types/layout').FooterProps> | null }) => Promise<void>;
 }
 
 export type { CanvasBlock };
@@ -105,59 +99,33 @@ export const Canvas = ({
           return;
         }
         
-        const newBlock: CanvasBlock = {
+        const newBlock: CanvasBlock<import('@/types/layout').HeaderProps> = {
           id: `header-${Date.now()}`,
           type: 'header',
           label: 'Header',
           zone: 'header',
           props: {
-            displayName: 'Your Name',
-            handle: '@yourhandle',
-            bioSnippet: 'Your bio goes here',
-            avatar: '/placeholder.svg',
-            navItems: [
-              { label: 'Home', url: '/', order: 0 },
-              { label: 'About', url: '/about', order: 1 },
-              { label: 'Portfolio', url: '/portfolio', order: 2 },
-              { label: 'Services', url: '/services', order: 3 },
-              { label: 'Posts', url: '/posts', order: 4 },
-              { label: 'Reels', url: '/reels', order: 5 },
-              { label: 'Stories', url: '/stories', order: 6 },
-              { label: 'Contact', url: '/contact', order: 7 },
+            layout: 'logo-nav-actions',
+            logo: {
+              type: 'text',
+              text: 'Your Brand'
+            },
+            nav: [
+              { label: 'Home', href: '/' },
+              { label: 'About', href: '/about' },
+              { label: 'Portfolio', href: '/portfolio' },
+              { label: 'Contact', href: '/contact' }
             ],
-            showSearch: true,
-            showCTA: true,
-            ctaLabel: 'Get Started',
-            ctaLink: '#',
-            showThemeToggle: true,
-            showLanguage: false,
-            showNotifications: true,
-            showMessages: true,
-            showCart: true,
-            cartBadge: 3,
-            showFollowers: true,
-            followersCount: 1247,
-            followingCount: 856,
-            layoutWidth: 'full',
+            showProfile: true,
+            avatar: '/placeholder.svg',
+            displayName: 'Your Name',
+            sticky: true,
+            stickyBehavior: 'normal',
+            background: 'hsl(var(--background))',
+            textColor: 'hsl(var(--foreground))',
             height: 80,
-            isSticky: true,
-            transparentUntilScroll: false,
-            paddingX: 24,
-            paddingY: 16,
-            gap: 16,
-            navBorderRadius: 8,
-            backgroundColor: '#ffffff',
-            surfaceColor: '#f8f9fa',
-            textColor: '#121726',
-            accentColor: '#4368D9',
-            shadowPreset: 'md',
-            brandFontSize: 20,
-            navFontSize: 14,
-            counterFontSize: 12,
-            collapseBreakpoint: 768,
-            visibleMobile: true,
-            visibleTablet: true,
-            visibleDesktop: true,
+            collapseToBurger: true,
+            showSearch: true,
           },
         };
         
@@ -182,70 +150,54 @@ export const Canvas = ({
           return;
         }
         
-        const newBlock: CanvasBlock = {
+        const newBlock: CanvasBlock<import('@/types/layout').FooterProps> = {
           id: `footer-${Date.now()}`,
           type: 'footer',
           label: 'Footer',
           zone: 'footer',
           props: {
-            columns: [
+            layout: 'columns',
+            logo: {
+              type: 'text',
+              text: 'Your Brand'
+            },
+            linkGroups: [
               {
                 title: 'Product',
                 links: [
-                  { label: 'Features', url: '/features' },
-                  { label: 'Pricing', url: '/pricing' },
-                  { label: 'FAQ', url: '/faq' },
+                  { label: 'Features', href: '/features' },
+                  { label: 'Pricing', href: '/pricing' },
+                  { label: 'FAQ', href: '/faq' },
                 ]
               },
               {
                 title: 'Company',
                 links: [
-                  { label: 'About', url: '/about' },
-                  { label: 'Blog', url: '/blog' },
-                  { label: 'Careers', url: '/careers' },
-                ]
-              },
-              {
-                title: 'Resources',
-                links: [
-                  { label: 'Documentation', url: '/docs' },
-                  { label: 'Support', url: '/support' },
-                  { label: 'API', url: '/api' },
+                  { label: 'About', href: '/about' },
+                  { label: 'Blog', href: '/blog' },
+                  { label: 'Careers', href: '/careers' },
                 ]
               },
               {
                 title: 'Legal',
                 links: [
-                  { label: 'Privacy', url: '/privacy' },
-                  { label: 'Terms', url: '/terms' },
-                  { label: 'Cookies', url: '/cookies' },
+                  { label: 'Privacy', href: '/privacy' },
+                  { label: 'Terms', href: '/terms' },
                 ]
               },
             ],
+            showSocial: true,
             socialLinks: [
-              { platform: 'Twitter', url: 'https://twitter.com', icon: 'twitter' },
-              { platform: 'Instagram', url: 'https://instagram.com', icon: 'instagram' },
-              { platform: 'LinkedIn', url: 'https://linkedin.com', icon: 'linkedin' },
-              { platform: 'GitHub', url: 'https://github.com', icon: 'github' },
+              { platform: 'Twitter', url: 'https://twitter.com' },
+              { platform: 'Instagram', url: 'https://instagram.com' },
+              { platform: 'LinkedIn', url: 'https://linkedin.com' },
+              { platform: 'GitHub', url: 'https://github.com' },
             ],
-            showNewsletter: true,
-            newsletterTitle: 'Stay Updated',
-            copyrightYear: new Date().getFullYear(),
-            siteName: 'Your Site',
-            legalLinks: [
-              { label: 'Terms', url: '/terms' },
-              { label: 'Privacy', url: '/privacy' },
-              { label: 'Cookies', url: '/cookies' },
-            ],
-            footerLayoutWidth: 'full',
-            footerBackgroundColor: '#121726',
-            footerTextColor: '#C1C9D1',
-            dividerColor: '#ffffff20',
-            gridGap: 32,
-            cardVariant: 'glass',
-            visibleMobile: true,
-            visibleTablet: true,
-            visibleDesktop: true,
+            copyright: `© ${new Date().getFullYear()} Your Brand. All rights reserved.`,
+            background: 'hsl(var(--muted))',
+            textColor: 'hsl(var(--muted-foreground))',
+            height: 'auto',
+            showNewsletter: false,
           },
         };
         
@@ -922,7 +874,7 @@ export const Canvas = ({
                             <div className="font-medium text-gray-800">{footerBlock.label}</div>
                             <div className="text-xs text-gray-500">Footer Component</div>
                             <div className="text-sm text-gray-700 mt-1">
-                              {footerBlock.props?.siteName || 'Footer'}
+                              {footerBlock.props?.logo?.text || footerBlock.props?.copyright || 'Footer'}
                             </div>
                           </div>
                         </div>
