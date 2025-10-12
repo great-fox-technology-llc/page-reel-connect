@@ -111,53 +111,20 @@ export const Canvas = ({
           label: 'Header',
           zone: 'header',
           props: {
-            displayName: 'Your Name',
-            handle: '@yourhandle',
-            bioSnippet: 'Your bio goes here',
-            avatar: '/placeholder.svg',
-            navItems: [
-              { label: 'Home', url: '/', order: 0 },
-              { label: 'About', url: '/about', order: 1 },
-              { label: 'Portfolio', url: '/portfolio', order: 2 },
-              { label: 'Services', url: '/services', order: 3 },
-              { label: 'Posts', url: '/posts', order: 4 },
-              { label: 'Reels', url: '/reels', order: 5 },
-              { label: 'Stories', url: '/stories', order: 6 },
-              { label: 'Contact', url: '/contact', order: 7 },
+            layout: 'logo-nav-actions',
+            logo: { type: 'text', text: 'YourBrand' },
+            nav: [
+              { label: 'Home', href: '/' },
+              { label: 'Explore', href: '/discover' },
+              { label: 'Store', href: '/products' },
+              { label: 'Contact', href: '/contact' },
             ],
-            showSearch: true,
-            showCTA: true,
-            ctaLabel: 'Get Started',
-            ctaLink: '#',
-            showThemeToggle: true,
-            showLanguage: false,
-            showNotifications: true,
-            showMessages: true,
-            showCart: true,
-            cartBadge: 3,
-            showFollowers: true,
-            followersCount: 1247,
-            followingCount: 856,
-            layoutWidth: 'full',
-            height: 80,
-            isSticky: true,
-            transparentUntilScroll: false,
-            paddingX: 24,
-            paddingY: 16,
-            gap: 16,
-            navBorderRadius: 8,
-            backgroundColor: '#ffffff',
-            surfaceColor: '#f8f9fa',
-            textColor: '#121726',
-            accentColor: '#4368D9',
-            shadowPreset: 'md',
-            brandFontSize: 20,
-            navFontSize: 14,
-            counterFontSize: 12,
-            collapseBreakpoint: 768,
-            visibleMobile: true,
-            visibleTablet: true,
-            visibleDesktop: true,
+            showProfile: true,
+            sticky: false,
+            height: 64,
+            background: 'hsl(var(--background))',
+            textColor: 'hsl(var(--foreground))',
+            collapseToBurger: true,
           },
         };
         
@@ -188,64 +155,19 @@ export const Canvas = ({
           label: 'Footer',
           zone: 'footer',
           props: {
-            columns: [
-              {
-                title: 'Product',
-                links: [
-                  { label: 'Features', url: '/features' },
-                  { label: 'Pricing', url: '/pricing' },
-                  { label: 'FAQ', url: '/faq' },
-                ]
-              },
-              {
-                title: 'Company',
-                links: [
-                  { label: 'About', url: '/about' },
-                  { label: 'Blog', url: '/blog' },
-                  { label: 'Careers', url: '/careers' },
-                ]
-              },
-              {
-                title: 'Resources',
-                links: [
-                  { label: 'Documentation', url: '/docs' },
-                  { label: 'Support', url: '/support' },
-                  { label: 'API', url: '/api' },
-                ]
-              },
-              {
-                title: 'Legal',
-                links: [
-                  { label: 'Privacy', url: '/privacy' },
-                  { label: 'Terms', url: '/terms' },
-                  { label: 'Cookies', url: '/cookies' },
-                ]
-              },
-            ],
+            layout: 'row',
+            logo: { type: 'text', text: 'YourBrand' },
+            linkGroups: [],
+            showSocial: true,
             socialLinks: [
-              { platform: 'Twitter', url: 'https://twitter.com', icon: 'twitter' },
-              { platform: 'Instagram', url: 'https://instagram.com', icon: 'instagram' },
-              { platform: 'LinkedIn', url: 'https://linkedin.com', icon: 'linkedin' },
-              { platform: 'GitHub', url: 'https://github.com', icon: 'github' },
+              { platform: 'Twitter', url: '#' },
+              { platform: 'Facebook', url: '#' },
+              { platform: 'Instagram', url: '#' },
             ],
-            showNewsletter: true,
-            newsletterTitle: 'Stay Updated',
-            copyrightYear: new Date().getFullYear(),
-            siteName: 'Your Site',
-            legalLinks: [
-              { label: 'Terms', url: '/terms' },
-              { label: 'Privacy', url: '/privacy' },
-              { label: 'Cookies', url: '/cookies' },
-            ],
-            footerLayoutWidth: 'full',
-            footerBackgroundColor: '#121726',
-            footerTextColor: '#C1C9D1',
-            dividerColor: '#ffffff20',
-            gridGap: 32,
-            cardVariant: 'glass',
-            visibleMobile: true,
-            visibleTablet: true,
-            visibleDesktop: true,
+            copyright: '© 2025 YourBrand. All rights reserved.',
+            background: 'hsl(var(--card))',
+            textColor: 'hsl(var(--card-foreground))',
+            height: 64,
           },
         };
         
@@ -678,7 +600,10 @@ export const Canvas = ({
                           </Button>
                         </div>
                         
-                        <HeaderElement {...headerBlock.props} isSelected={selectedBlockId === headerBlock.id} />
+                        <HeaderElement 
+                          {...(headerBlock.props as any)}
+                          isSelected={selectedBlockId === headerBlock.id} 
+                        />
                       </div>
                     </ContextMenuTrigger>
                     <ContextMenuContent>
@@ -914,18 +839,10 @@ export const Canvas = ({
                           </Button>
                         </div>
                         
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded bg-primary/10 flex items-center justify-center text-primary">
-                            <PanelBottom className="w-5 h-5" />
-                          </div>
-                          <div className="flex-1">
-                            <div className="font-medium text-gray-800">{footerBlock.label}</div>
-                            <div className="text-xs text-gray-500">Footer Component</div>
-                            <div className="text-sm text-gray-700 mt-1">
-                              {footerBlock.props?.siteName || 'Footer'}
-                            </div>
-                          </div>
-                        </div>
+                        <FooterElement 
+                          {...(footerBlock.props as any)}
+                          isSelected={selectedBlockId === footerBlock.id} 
+                        />
                       </div>
                     </ContextMenuTrigger>
                     <ContextMenuContent>
