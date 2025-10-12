@@ -8,6 +8,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Chrome, Apple, Mail } from "lucide-react";
+import { passwordSchema } from "@/lib/validation";
 
 export default function Auth() {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -42,7 +43,17 @@ export default function Auth() {
     setLoading(true);
 
     try {
+      // Validate password strength for sign up
       if (isSignUp) {
+        try {
+          passwordSchema.parse(password);
+        } catch (validationError: any) {
+          const errorMessage = validationError.errors?.[0]?.message || "Password does not meet requirements";
+          toast.error(errorMessage);
+          setLoading(false);
+          return;
+        }
+
         const { error } = await supabase.auth.signUp({
           email,
           password,
@@ -218,9 +229,21 @@ export default function Auth() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                minLength={6}
+                minLength={isSignUp ? 8 : 6}
                 className="bg-background/50"
               />
+              {isSignUp && (
+                <div className="text-xs text-muted-foreground space-y-1">
+                  <p className="font-medium">Password must contain:</p>
+                  <ul className="list-disc list-inside space-y-0.5 pl-2">
+                    <li>At least 8 characters</li>
+                    <li>One uppercase letter (A-Z)</li>
+                    <li>One lowercase letter (a-z)</li>
+                    <li>One number (0-9)</li>
+                    <li>One special character (!@#$%^&*)</li>
+                  </ul>
+                </div>
+              )}
             </div>
 
             {!isSignUp && (
