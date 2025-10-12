@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 interface Profile {
   id: string;
-  email: string;
+  // Email removed for security - access via user.email from auth session
   handle: string;
   display_name: string | null;
   bio: string | null;
@@ -53,7 +53,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           .from('profiles')
           .insert({
             id: userId,
-            email: userData.user.email || '',
+            // Email intentionally omitted - stored securely in auth.users
             handle,
             display_name: handle,
           })

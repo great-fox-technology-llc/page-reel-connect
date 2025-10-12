@@ -664,7 +664,6 @@ export type Database = {
           cover_url: string | null
           created_at: string
           display_name: string | null
-          email: string
           followers_count: number | null
           following_count: number | null
           handle: string
@@ -681,7 +680,6 @@ export type Database = {
           cover_url?: string | null
           created_at?: string
           display_name?: string | null
-          email: string
           followers_count?: number | null
           following_count?: number | null
           handle: string
@@ -698,7 +696,6 @@ export type Database = {
           cover_url?: string | null
           created_at?: string
           display_name?: string | null
-          email?: string
           followers_count?: number | null
           following_count?: number | null
           handle?: string
