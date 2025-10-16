@@ -3,11 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Bell, Plus, CheckCircle2, Circle, Eye, Users, Heart, DollarSign, TrendingUp } from "lucide-react";
+import { Bell, Plus, CheckCircle2, Circle, Eye, Users, Heart, DollarSign, TrendingUp, Shield } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAnalytics } from "@/hooks/useAnalytics";
 import { useProfileProgress } from "@/hooks/useProfileProgress";
+import { useAdminRole } from "@/hooks/useAdminRole";
 import { formatNumber, formatCurrency } from "@/lib/format";
 
 export default function Dashboard() {
@@ -15,6 +16,7 @@ export default function Dashboard() {
   const { user, profile } = useAuth();
   const { data: analytics, isLoading: analyticsLoading } = useAnalytics(user?.id);
   const { data: progress, isLoading: progressLoading } = useProfileProgress(user?.id);
+  const { hasAdminAccess } = useAdminRole();
 
   const tasks = [
     { id: 1, title: "Set up your profile", description: "Add profile photo and bio", completed: progress?.hasAvatar && progress?.hasBio, action: "/settings" },
@@ -76,6 +78,16 @@ export default function Dashboard() {
               <p className="text-muted-foreground mt-1">Here's what's happening with your creative work today.</p>
             </div>
             <div className="flex items-center gap-3">
+              {hasAdminAccess && (
+                <Button 
+                  variant="outline" 
+                  className="gap-2 border-primary/50 text-primary hover:bg-primary/10"
+                  onClick={() => navigate('/admin')}
+                >
+                  <Shield className="w-4 h-4" />
+                  Admin Panel
+                </Button>
+              )}
               <Button variant="outline" className="gap-2">
                 <Bell className="w-4 h-4" />
               </Button>

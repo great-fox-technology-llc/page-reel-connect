@@ -3,12 +3,13 @@ import {
   LayoutDashboard, Edit3, FileText, MessageSquare, Image as ImageIcon, 
   Video, Archive, ShoppingBag, ShoppingCart, Tag, CreditCard, 
   Users, UserPlus, Mail, Bell, BarChart3, TrendingUp, Activity,
-  ChevronLeft, Search, LogOut, Settings as SettingsIcon
+  ChevronLeft, Search, LogOut, Settings as SettingsIcon, Shield
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
+import { useAdminRole } from "@/hooks/useAdminRole";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -70,6 +71,7 @@ export const Sidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, profile, signOut } = useAuth();
+  const { hasAdminAccess } = useAdminRole();
 
   const handleSignOut = async () => {
     await signOut();
@@ -138,6 +140,28 @@ export const Sidebar = () => {
             </div>
           </div>
         ))}
+        
+        {hasAdminAccess && (
+          <div>
+            <h3 className="px-3 mb-2 text-xs font-semibold text-muted-foreground tracking-wider">
+              ADMIN
+            </h3>
+            <div className="space-y-1">
+              <Link
+                to="/admin"
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200",
+                  location.pathname === "/admin"
+                    ? "bg-primary/10 text-primary font-medium" 
+                    : "text-muted-foreground hover:bg-white/5 hover:text-foreground"
+                )}
+              >
+                <Shield className="w-4 h-4" />
+                <span className="text-sm">Admin Panel</span>
+              </Link>
+            </div>
+          </div>
+        )}
       </nav>
 
       {/* User Profile */}

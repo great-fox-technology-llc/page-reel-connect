@@ -16,7 +16,7 @@ interface RoleAssignmentModalProps {
   onSuccess: () => void;
 }
 
-const allRoles: AdminRole[] = ["superadmin", "moderator", "support", "finance", "engineer"];
+const allRoles: AdminRole[] = ["superadmin", "admin", "moderator"];
 
 export function RoleAssignmentModal({
   open,

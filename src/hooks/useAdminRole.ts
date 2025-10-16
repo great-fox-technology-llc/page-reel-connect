@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
-export type AdminRole = 'superadmin' | 'moderator' | 'support' | 'finance' | 'engineer' | 'user';
+export type AdminRole = 'superadmin' | 'admin' | 'moderator' | 'user';
 
 export const useAdminRole = () => {
   const { user } = useAuth();
@@ -24,7 +24,7 @@ export const useAdminRole = () => {
   });
 
   const hasAdminAccess = roles && roles.some(role => 
-    ['superadmin', 'moderator', 'support', 'finance', 'engineer'].includes(role)
+    ['superadmin', 'admin', 'moderator'].includes(role)
   );
 
   const hasRole = (role: AdminRole) => roles?.includes(role) ?? false;
