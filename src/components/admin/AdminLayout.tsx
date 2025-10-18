@@ -9,7 +9,7 @@ import {
   LayoutDashboard, Users, Shield, Flag, FileText, 
   ShoppingBag, MessageSquare, Bell, BarChart3, 
   Settings, AlertTriangle, ChevronRight, Package,
-  ShoppingCart, Ticket, DollarSign, Activity
+  ShoppingCart, Ticket, DollarSign, Activity, ArrowLeft
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -114,6 +114,18 @@ export function AdminLayout({ children }: AdminLayoutProps) {
               </Badge>
             </div>
           </div>
+        </div>
+
+        <div className="px-2 py-3 border-b border-white/5">
+          <Link to="/dashboard">
+            <Button
+              variant="outline"
+              className="w-full justify-start text-sm"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Dashboard
+            </Button>
+          </Link>
         </div>
 
         <div className="flex-1 overflow-y-auto px-2 py-4 space-y-6">
