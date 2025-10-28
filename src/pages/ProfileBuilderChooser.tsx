@@ -37,7 +37,7 @@ export default function ProfileBuilderChooser() {
             <Button
               size="lg"
               onClick={() => navigate('/templates')}
-              className="w-full"
+              className="w-full hover:shadow-lg hover:scale-105 transition-all duration-300"
             >
               Browse Templates
             </Button>
@@ -54,9 +54,8 @@ export default function ProfileBuilderChooser() {
             </p>
             <Button
               size="lg"
-              variant="outline"
               onClick={() => navigate('/profile-builder?mode=scratch')}
-              className="w-full"
+              className="w-full hover:shadow-lg hover:scale-105 transition-all duration-300"
             >
               Start Building
             </Button>
@@ -64,8 +63,8 @@ export default function ProfileBuilderChooser() {
         </div>
 
         <div className="text-center mt-8">
-          <Button variant="ghost" onClick={() => navigate('/pages')}>
-            ← Back to Pages
+          <Button variant="ghost" onClick={() => navigate('/dashboard')}>
+            ← Back to Dashboard
           </Button>
         </div>
       </div>
