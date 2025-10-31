@@ -10,6 +10,7 @@ import { useAnalytics } from "@/hooks/useAnalytics";
 import { useProfileProgress } from "@/hooks/useProfileProgress";
 import { useAdminRole } from "@/hooks/useAdminRole";
 import { formatNumber, formatCurrency } from "@/lib/format";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -88,6 +89,7 @@ export default function Dashboard() {
                   Admin Panel
                 </Button>
               )}
+              <ThemeToggle />
               <Button variant="outline" className="gap-2">
                 <Bell className="w-4 h-4" />
               </Button>

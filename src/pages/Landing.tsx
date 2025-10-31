@@ -2,6 +2,8 @@ import { Header } from "@/components/layout/Header";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Link } from "react-router-dom";
+import { useEffect } from "react";
+import { useTheme } from "next-themes";
 import {
   Layout,
   Users,
@@ -14,6 +16,13 @@ import {
 } from "lucide-react";
 
 export default function Landing() {
+  const { setTheme } = useTheme();
+
+  // Force dark theme on landing page
+  useEffect(() => {
+    setTheme("dark");
+  }, [setTheme]);
+
   return (
     <div className="min-h-screen bg-background">
       <Header />

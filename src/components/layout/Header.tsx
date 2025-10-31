@@ -24,9 +24,6 @@ export const Header = () => {
             <Link to="/pricing" className="text-muted-foreground hover:text-foreground transition-colors">
               Pricing
             </Link>
-            <Link to="/discover" className="text-muted-foreground hover:text-foreground transition-colors">
-              Discover
-            </Link>
           </div>
 
           <div className="hidden md:flex items-center gap-4">
@@ -63,13 +60,6 @@ export const Header = () => {
               onClick={() => setMobileMenuOpen(false)}
             >
               Pricing
-            </Link>
-            <Link
-              to="/discover"
-              className="text-muted-foreground hover:text-foreground transition-colors"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Discover
             </Link>
             <Link to="/auth" onClick={() => setMobileMenuOpen(false)}>
               <Button variant="ghost" className="w-full">

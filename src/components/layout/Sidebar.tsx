@@ -20,6 +20,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useNavigate } from "react-router-dom";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 
 const navigationSections = [
   {
@@ -166,6 +167,10 @@ export const Sidebar = () => {
 
       {/* User Profile */}
       <div className="p-4 border-t border-white/10">
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-xs font-semibold text-muted-foreground tracking-wider">THEME</span>
+          <ThemeToggle />
+        </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="w-full justify-start gap-3 h-auto p-2">

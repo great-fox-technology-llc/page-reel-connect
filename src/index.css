@@ -53,6 +53,45 @@ All colors MUST be HSL.
     --glass-bg: hsl(220 18% 15% / 0.7);
     --glass-border: hsl(210 20% 90% / 0.1);
   }
+
+  .light {
+    --background: 0 0% 100%;
+    --foreground: 220 18% 12%;
+
+    --card: 0 0% 98%;
+    --card-foreground: 220 18% 12%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 18% 12%;
+
+    --primary: 234 56% 56%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 43 75% 56%;
+    --secondary-foreground: 220 18% 12%;
+
+    --accent-orange: 20 75% 56%;
+    --accent-orange-foreground: 0 0% 100%;
+
+    --muted: 220 15% 95%;
+    --muted-foreground: 220 15% 40%;
+
+    --accent: 234 56% 56%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 72% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 15% 90%;
+    --input: 220 15% 95%;
+    --ring: 234 56% 56%;
+
+    --shadow-glow: 0 0 40px hsl(234 56% 56% / 0.2);
+    --shadow-card: 0 4px 20px hsl(0 0% 0% / 0.1);
+    
+    --glass-bg: hsl(0 0% 100% / 0.8);
+    --glass-border: hsl(220 18% 12% / 0.1);
+  }
 }
 
 @layer base {

@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ContentProvider } from "./contexts/ContentContext";
 import { AuthProvider } from "./contexts/AuthContext";
+import { ThemeProvider } from "./contexts/ThemeContext";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import Landing from "./pages/Landing";
 import Auth from "./pages/Auth";
@@ -51,10 +52,11 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
       <ContentProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
+        <ThemeProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/auth" element={<Auth />} />
@@ -80,7 +82,7 @@ const App = () => (
             <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
             <Route path="/sales" element={<ProtectedRoute><Sales /></ProtectedRoute>} />
             <Route path="/growth" element={<ProtectedRoute><Growth /></ProtectedRoute>} />
-            <Route path="/discover" element={<Discover />} />
+            <Route path="/discover" element={<ProtectedRoute><Discover /></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
             <Route path="/admin" element={<AdminGuard><SystemOverview /></AdminGuard>} />
             <Route path="/admin/users" element={<AdminGuard><Users /></AdminGuard>} />
@@ -97,7 +99,8 @@ const App = () => (
             <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
-        </TooltipProvider>
+          </TooltipProvider>
+        </ThemeProvider>
       </ContentProvider>
     </AuthProvider>
   </QueryClientProvider>
