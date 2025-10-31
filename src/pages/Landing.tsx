@@ -21,7 +21,7 @@ export default function Landing() {
   // Force dark theme on landing page
   useEffect(() => {
     setTheme("dark");
-  }, [setTheme]);
+  }, []); // Empty array - only run once on mount
 
   return (
     <div className="min-h-screen bg-background">
