@@ -181,7 +181,7 @@ export const ComponentLibrary = () => {
                           componentLabel: item.label,
                         }));
                       }}
-                      className="flex flex-col items-center justify-center gap-2 p-3 rounded-lg bg-background/50 hover:bg-primary/10 hover:border-primary/50 border border-white/10 transition-all cursor-move group"
+                      className="flex flex-col items-center justify-center gap-2 p-3 rounded-lg bg-background/50 hover:bg-primary/10 border border-muted transition-all cursor-move group"
                     >
                       <div className="text-primary/70 group-hover:text-primary group-hover:scale-110 transition-all">
                         {iconMap[item.id]}

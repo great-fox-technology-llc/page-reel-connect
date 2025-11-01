@@ -3,6 +3,7 @@ import { Sidebar } from '@/components/layout/Sidebar';
 import { usePosts, usePostLikes } from '@/hooks/usePosts';
 import { useFileUpload } from '@/hooks/useFileUpload';
 import { useAuth } from '@/contexts/AuthContext';
+import { useContent } from '@/contexts/ContentContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
@@ -15,13 +16,37 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const Posts = () => {
   const { posts, isLoading, createPost, likePost } = usePosts();
+  const { posts: demoPosts } = useContent();
   const { profile } = useAuth();
   const [filter, setFilter] = useState<'all' | 'following' | 'trending'>('all');
   const [sort, setSort] = useState<'newest' | 'top' | 'commented'>('newest');
   const [displayedPosts, setDisplayedPosts] = useState(6);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 
-  const sortedPosts = [...posts].sort((a, b) => {
+  // Convert demo posts to match database format
+  const convertedDemoPosts = demoPosts.map(post => ({
+    id: post.id,
+    user_id: post.author.id,
+    caption: post.caption,
+    media: post.media?.map(m => m.url) || [],
+    location: post.location,
+    tags: post.tags,
+    likes_count: post.likes,
+    comments_count: post.comments,
+    shares_count: post.shares,
+    created_at: post.createdAt,
+    profiles: {
+      id: post.author.id,
+      display_name: post.author.name,
+      handle: post.author.handle,
+      avatar_url: post.author.avatar,
+    }
+  }));
+
+  // Use demo posts when no real posts exist
+  const allPosts = posts.length > 0 ? posts : convertedDemoPosts;
+
+  const sortedPosts = [...allPosts].sort((a, b) => {
     if (sort === 'newest') return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
     if (sort === 'top') return b.likes_count - a.likes_count;
     return b.comments_count - a.comments_count;
@@ -97,29 +122,25 @@ const Posts = () => {
                 <div className="flex justify-center p-12">
                   <Loader2 className="w-8 h-8 animate-spin text-primary" />
                 </div>
-              ) : visiblePosts.length === 0 ? (
-                <Card className="p-12 text-center">
-                  <div className="max-w-md mx-auto">
-                    <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                      <Plus className="w-10 h-10 text-primary" />
-                    </div>
-                    <h3 className="text-xl font-semibold mb-2">No posts yet</h3>
-                    <p className="text-muted-foreground mb-6">
-                      Be the first to share something amazing with the community!
-                    </p>
-                    <Button onClick={() => setIsCreateDialogOpen(true)}>Create Your First Post</Button>
-                  </div>
-                </Card>
               ) : (
                 <>
-                  {visiblePosts.map((post) => (
-                    <PostCard 
-                      key={post.id} 
-                      post={post} 
-                      formatTime={formatTime} 
-                      formatNumber={formatNumber}
-                      onLike={() => likePost.mutate(post.id)}
-                    />
+                  {visiblePosts.map((post, index) => (
+                    <div key={post.id} className="relative">
+                      <PostCard 
+                        post={post} 
+                        formatTime={formatTime} 
+                        formatNumber={formatNumber}
+                        onLike={() => likePost.mutate(post.id)}
+                      />
+                      {posts.length === 0 && index < 3 && (
+                        <Badge 
+                          variant="secondary" 
+                          className="absolute top-4 right-4 bg-primary/10 text-primary border-primary/20"
+                        >
+                          Sample
+                        </Badge>
+                      )}
+                    </div>
                   ))}
                   
                   {displayedPosts < sortedPosts.length && (
